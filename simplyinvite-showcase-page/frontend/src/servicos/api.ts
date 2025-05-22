@@ -1,11 +1,15 @@
 import axios from "axios";
 
-const api = axios.create({
-  baseURL: "http://localhost:8082/api",
+const instance = axios.create({
+  baseURL: "/api",
+  timeout: 5000, // Timeout de 5 segundos
+  headers: {
+    // ... existing code ...
+  },
 });
 
 // Adiciona um interceptor de requisição
-api.interceptors.request.use(
+instance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -18,4 +22,4 @@ api.interceptors.request.use(
   }
 );
 
-export default api;
+export default instance;
