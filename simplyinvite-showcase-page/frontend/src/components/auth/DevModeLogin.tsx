@@ -1,37 +1,36 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { isSupabaseConfigured } from "@/backend/database/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import type { ProfileType } from "@/types/profiles";
 
 // Este componente só deve ser usado em ambiente de desenvolvimento
 const DevModeLogin = () => {
   const { toast } = useToast();
   const { signIn } = useAuth();
   
-  // Apenas mostrar em ambiente de desenvolvimento e quando Supabase não estiver configurado
-  if (import.meta.env.PROD || isSupabaseConfigured()) {
+  // Apenas mostrar em ambiente de desenvolvimento
+  if (import.meta.env.PROD) {
     return null;
   }
 
-  const handleDevLogin = async (email: string, profileType: 'talent' | 'hr' | 'manager') => {
+  const handleDevLogin = async (email: string, profileType: ProfileType) => {
     // Alertar claramente que isso é apenas para desenvolvimento
     toast({
       title: "Modo de desenvolvimento",
-      description: "Login simulado para desenvolvimento. Configure o Supabase para autenticação real.",
+      description: "Login simulado para desenvolvimento.",
       variant: "default"
     });
 
     // Tenta fazer login com credenciais de teste
-    const result = await signIn(email, 'senha123', profileType);
+    const result = await signIn(email, 'senha123');
     
     if (result?.error) {
       toast({
         variant: "destructive",
         title: "Erro no login de desenvolvimento",
-        description: "Configure o Supabase corretamente ou crie os usuários de teste.",
+        description: "Erro ao fazer login com as credenciais de teste.",
       });
     }
   };
@@ -52,27 +51,27 @@ const DevModeLogin = () => {
           <Button 
             variant="outline" 
             className="border-orange-300 hover:bg-orange-100"
-            onClick={() => handleDevLogin('jovem@example.com', 'talent')}
+            onClick={() => handleDevLogin('jovem@example.com', 'jovem')}
           >
             Jovem
           </Button>
           <Button 
             variant="outline"
             className="border-orange-300 hover:bg-orange-100"
-            onClick={() => handleDevLogin('rh@example.com', 'hr')}
+            onClick={() => handleDevLogin('rh@example.com', 'rh')}
           >
             RH
           </Button>
           <Button 
             variant="outline"
             className="border-orange-300 hover:bg-orange-100"
-            onClick={() => handleDevLogin('gestor@example.com', 'manager')}
+            onClick={() => handleDevLogin('gestor@example.com', 'gestor')}
           >
             Gestor
           </Button>
         </div>
         <div className="text-xs text-orange-600 mt-4">
-          Para usar autenticação real, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.
+          Para usar autenticação real, configure as variáveis de ambiente do backend.
         </div>
       </CardContent>
     </Card>

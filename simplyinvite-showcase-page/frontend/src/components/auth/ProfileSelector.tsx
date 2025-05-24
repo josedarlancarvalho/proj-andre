@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,13 +22,13 @@ const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
   
   const handleProfileSelect = (profileType: string) => {
     switch (profileType) {
-      case 'talent':
+      case 'jovem':
         navigate('/jovem-auth');
         break;
-      case 'hr':
+      case 'rh':
         navigate('/rh-auth');
         break;
-      case 'manager':
+      case 'gestor':
         navigate('/gestor-auth');
         break;
       default:
@@ -50,7 +49,7 @@ const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
           <Card className="cursor-pointer hover:border-si-accent transition-all" 
-                onClick={() => handleProfileSelect('talent')}>
+                onClick={() => handleProfileSelect('jovem')}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <User className="h-12 w-12 text-si-accent mb-4" />
               <h3 className="text-lg font-medium">Sou Jovem</h3>
@@ -61,7 +60,7 @@ const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
           </Card>
           
           <Card className="cursor-pointer hover:border-si-accent transition-all"
-                onClick={() => handleProfileSelect('hr')}>
+                onClick={() => handleProfileSelect('rh')}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <Users className="h-12 w-12 text-si-accent mb-4" />
               <h3 className="text-lg font-medium">Sou RH</h3>
@@ -72,7 +71,7 @@ const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
           </Card>
           
           <Card className="cursor-pointer hover:border-si-accent transition-all"
-                onClick={() => handleProfileSelect('manager')}>
+                onClick={() => handleProfileSelect('gestor')}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <Briefcase className="h-12 w-12 text-si-accent mb-4" />
               <h3 className="text-lg font-medium">Sou Chefe</h3>

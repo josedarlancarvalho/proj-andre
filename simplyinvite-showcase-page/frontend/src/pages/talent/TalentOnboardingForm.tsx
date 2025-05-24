@@ -93,11 +93,11 @@ const TalentOnboardingForm = () => {
     try {
       console.log("Form data submitted:", data);
 
-      // Em uma implementação real, você enviaria esses dados para o Supabase
-      // await supabase.from('talent_profiles').upsert({
-      //   user_id: user?.id,
-      //   ...data
-      // });
+      // Em uma implementação real, você enviaria esses dados para o backend
+      // await api.post('/jovem/onboarding', formData);
+      
+      // Simulando um delay para feedback visual
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success("Perfil atualizado com sucesso!");
       navigate("/jovem");

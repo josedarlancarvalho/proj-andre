@@ -7,12 +7,13 @@ import { X } from "lucide-react";
 const HRAuth = () => {
   const [isAuthOpen, setIsAuthOpen] = useState(true);
   const navigate = useNavigate();
-  const showDevMode = import.meta.env.DEV;
 
   const handleClose = () => {
     setIsAuthOpen(false);
     navigate("/");
   };
+
+  if (!isAuthOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -34,7 +35,7 @@ const HRAuth = () => {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <AuthForm userType="hr" isOpen={isAuthOpen} onClose={handleClose} />
+        <AuthForm userType="rh" isOpen={isAuthOpen} onClose={handleClose} />
       </div>
     </div>
   );

@@ -81,7 +81,7 @@ const TalentProfile = () => {
   };
 
   return (
-    <UserPanelLayout userName={profile.name} userType="talent">
+    <UserPanelLayout userType="jovem">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Meu Perfil</h1>

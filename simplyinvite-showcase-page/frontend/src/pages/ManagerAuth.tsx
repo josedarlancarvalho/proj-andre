@@ -35,11 +35,7 @@ const ManagerAuth = () => {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <AuthForm
-          userType="manager"
-          isOpen={isAuthOpen}
-          onClose={handleClose}
-        />
+        <AuthForm userType="gestor" isOpen={isAuthOpen} onClose={handleClose} />
       </div>
     </div>
   );

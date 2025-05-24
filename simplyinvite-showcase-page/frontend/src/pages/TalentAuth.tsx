@@ -32,7 +32,7 @@ const TalentAuth = () => {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <AuthForm userType="talent" isOpen={isAuthOpen} onClose={handleClose} />
+        <AuthForm userType="jovem" isOpen={isAuthOpen} onClose={handleClose} />
       </div>
     </div>
   );

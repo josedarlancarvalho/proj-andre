@@ -1,24 +1,34 @@
-import api from "./api";
+import type { AxiosResponse } from 'axios';
+import api from './api';
 
 export interface Usuario {
   id?: string;
   email: string;
   senha?: string;
-  tipoPerfil: "talent" | "hr" | "manager";
+  tipoPerfil: "jovem" | "rh" | "gestor";
   nomeCompleto?: string;
+  onboardingComplete?: boolean;
+  avatarUrl?: string;
 }
 
-export async function registrar(usuario: Usuario) {
-  const response = await api.post("/usuarios", usuario);
+export interface UsuarioLoginResponseDTO {
+  usuario: Usuario;
+  token: string;
+  tipoPerfil: "jovem" | "rh" | "gestor";
+  message?: string;
+}
+
+export async function registrar(usuario: Usuario): Promise<UsuarioLoginResponseDTO> {
+  const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post("/auth/register", usuario);
   return response.data;
 }
 
-export async function login(email: string, senha: string) {
-  const response = await api.post("/auth/login", { email, senha });
+export async function login(email: string, senha: string): Promise<UsuarioLoginResponseDTO> {
+  const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post("/auth/login", { email, senha });
   return response.data;
 }
 
-export async function getMeuPerfil() {
-  const response = await api.get("/auth/me");
-  return response.data; // Espera-se que retorne { usuario: UsuarioLoginResponseDTO, tipoPerfil: string }
+export async function getMeuPerfil(): Promise<{ usuario: Usuario; tipoPerfil: string }> {
+  const response: AxiosResponse<{ usuario: Usuario; tipoPerfil: string }> = await api.get("/auth/me");
+  return response.data;
 }

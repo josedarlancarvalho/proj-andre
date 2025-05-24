@@ -23,7 +23,7 @@ module.exports = {
         allowNull: false,
       },
       tipoPerfil: {
-        type: Sequelize.ENUM('talent', 'hr', 'manager'),
+        type: Sequelize.ENUM('jovem', 'rh', 'gestor'),
         allowNull: false,
       },
       createdAt: {

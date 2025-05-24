@@ -13,29 +13,44 @@ services:
     depends_on:
       - backend
 
-  # Backend Node.js com Express
+  # Backend Spring Boot
   backend:
     build:
-      context: ./backend1
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
-      - PORT=8080
-      - DB_HOST=postgres
-      - DB_USER=postgres
-      - DB_PASS=321
-      - DB_NAME=simplyinvite
-      - JWT_SECRET=simplyinvite_secret_key_12345
-      - NODE_ENV=development
-    volumes:
-      - ./backend1:/usr/src/app
-      - /usr/src/app/node_modules
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/simplyinvite
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=jonas1385
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
     networks:
       - app-network
     depends_on:
       - postgres
-    restart: unless-stopped
+
+  # Node.js Backend (backend1)
+  backend1:
+    build:
+      context: ./backend1
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASS=jonas1385
+      - DB_NAME=simplyinvite
+      - NODE_ENV=development
+      - PORT=8080
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend1:/usr/src/app
+      - /usr/src/app/node_modules
 
   # PostgreSQL Database
   postgres:
@@ -44,7 +59,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=321
+      - POSTGRES_PASSWORD=jonas1385
       - POSTGRES_DB=simplyinvite
     volumes:
       - postgres-data:/var/lib/postgresql/data

@@ -3,14 +3,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const sequelize = new Sequelize({
-  dialect: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'vamo_db',
-  logging: false // Disable logging for presentation
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME || 'vamo',
+  process.env.DB_USER || 'postgres',
+  process.env.DB_PASS || 'postgres',
+  {
+    host: process.env.DB_HOST || 'localhost',
+    dialect: 'postgres',
+    logging: false,
+    define: {
+      timestamps: true,
+      underscored: true,
+    },
+  }
+);
 
 // Testar a conexão e sincronizar os modelos
 const initDatabase = async () => {

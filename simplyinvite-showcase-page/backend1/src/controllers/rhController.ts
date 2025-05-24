@@ -1,18 +1,7 @@
 import { Request, Response } from 'express';
 import db from '../models';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import { RequestHandler } from '../types/controller';
-
-// Tipos de resposta para melhor tipagem
-interface EstatisticasRH {
-  avaliacoesTotal: number;
-  medalhas: {
-    ouro: number;
-    prata: number;
-    bronze: number;
-  };
-  projetosPendentes: number;
-}
 
 // Buscar projetos pendentes
 export const buscarProjetosPendentes: RequestHandler = async (req, res) => {
@@ -113,29 +102,39 @@ export const buscarEstatisticas: RequestHandler = async (req, res) => {
     const avaliadorId = (req as any).usuario.id;
 
     const estatisticas = {
-      totalAvaliacoes: await db.Avaliacao.count({ where: { avaliadorId } }),
+      avaliacoesTotal: await db.Avaliacao.count({ where: { avaliadorId } }),
+      medalhas: {
+        ouro: await db.Avaliacao.count({ where: { avaliadorId, medalha: 'ouro' } }),
+        prata: await db.Avaliacao.count({ where: { avaliadorId, medalha: 'prata' } }),
+        bronze: await db.Avaliacao.count({ where: { avaliadorId, medalha: 'bronze' } })
+      },
+      projetosPendentes: await db.Projeto.count({ where: { status: 'pendente' } }),
+      avaliacoesPorMes: await db.Avaliacao.findAll({
+        where: { avaliadorId },
+        attributes: [
+          [Sequelize.fn('date_trunc', 'month', Sequelize.col('createdAt')), 'mes'],
+          [Sequelize.fn('count', '*'), 'total']
+        ],
+        group: [Sequelize.fn('date_trunc', 'month', Sequelize.col('createdAt'))],
+        raw: true
+      }),
+      distribuicaoMedalhas: await db.Avaliacao.findAll({
+        where: { avaliadorId },
+        attributes: [
+          'medalha',
+          [Sequelize.fn('count', '*'), 'total']
+        ],
+        group: ['medalha'],
+        raw: true
+      }),
       projetosAvaliados: await db.Projeto.count({
         where: { status: 'avaliado' },
         include: [
           {
             model: db.Avaliacao,
-            as: 'avaliacoes',
-            where: { avaliadorId },
-            required: true
+            where: { avaliadorId }
           }
         ]
-      }),
-      avaliacoesEncaminhadas: await db.Avaliacao.count({
-        where: {
-          avaliadorId,
-          encaminhadoParaGestor: true
-        }
-      }),
-      medalhasDistribuidas: await db.Avaliacao.count({
-        where: {
-          avaliadorId,
-          medalha: { [Op.not]: null }
-        }
       })
     };
 
@@ -223,48 +222,5 @@ export const atualizarPerfil: RequestHandler = async (req, res) => {
     return res.json(usuarioAtualizado);
   } catch (error) {
     return res.status(500).json({ message: 'Erro ao atualizar perfil' });
-  }
-};
-
-// Buscar relatórios
-export const buscarRelatorios: RequestHandler = async (req, res) => {
-  try {
-    const avaliadorId = (req as any).usuario.id;
-    
-    const relatorios = {
-      avaliacoesPorMes: await db.Avaliacao.findAll({
-        where: { avaliadorId },
-        attributes: [
-          [db.sequelize.fn('date_trunc', 'month', db.sequelize.col('createdAt')), 'mes'],
-          [db.sequelize.fn('count', '*'), 'total']
-        ],
-        group: [db.sequelize.fn('date_trunc', 'month', db.sequelize.col('createdAt'))]
-      }),
-      
-      distribuicaoMedalhas: await db.Avaliacao.findAll({
-        where: { avaliadorId },
-        attributes: [
-          'medalha',
-          [db.sequelize.fn('count', '*'), 'total']
-        ],
-        group: ['medalha']
-      }),
-      
-      projetosAvaliados: await db.Projeto.count({
-        where: { status: 'avaliado' },
-        include: [
-          {
-            model: db.Avaliacao,
-            as: 'avaliacoes',
-            where: { avaliadorId },
-            required: true
-          }
-        ]
-      })
-    };
-    
-    return res.json(relatorios);
-  } catch (error) {
-    return res.status(500).json({ message: 'Erro ao buscar relatórios' });
   }
 }; 

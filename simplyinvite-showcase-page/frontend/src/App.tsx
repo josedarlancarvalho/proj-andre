@@ -76,7 +76,7 @@ const App = () => {
           <Route
             path="/jovem"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentPanel />
               </ProtectedRoute>
             }
@@ -84,7 +84,7 @@ const App = () => {
           <Route
             path="/jovem/onboarding"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentOnboardingForm />
               </ProtectedRoute>
             }
@@ -92,7 +92,7 @@ const App = () => {
           <Route
             path="/jovem/perfil"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentProfile />
               </ProtectedRoute>
             }
@@ -100,7 +100,7 @@ const App = () => {
           <Route
             path="/jovem/submissoes"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentSubmissions />
               </ProtectedRoute>
             }
@@ -108,7 +108,7 @@ const App = () => {
           <Route
             path="/jovem/feedbacks"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentFeedback />
               </ProtectedRoute>
             }
@@ -118,7 +118,7 @@ const App = () => {
           <Route
             path="/jovem/evolucao"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentProgress />
               </ProtectedRoute>
             }
@@ -126,7 +126,7 @@ const App = () => {
           <Route
             path="/jovem/convites"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <TalentInvitations />
               </ProtectedRoute>
             }
@@ -136,7 +136,7 @@ const App = () => {
           <Route
             path="/jovem/notificacoes"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <NotificacoesPage />
               </ProtectedRoute>
             }
@@ -144,7 +144,7 @@ const App = () => {
           <Route
             path="/jovem/configuracoes"
             element={
-              <ProtectedRoute requiredProfileType="talent">
+              <ProtectedRoute requiredProfileType="jovem">
                 <ConfiguracoesPage />
               </ProtectedRoute>
             }
@@ -154,7 +154,7 @@ const App = () => {
           <Route
             path="/rh"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <EvaluationPanel />
               </ProtectedRoute>
             }
@@ -162,7 +162,7 @@ const App = () => {
           <Route
             path="/rh/perfil"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <HRProfile />
               </ProtectedRoute>
             }
@@ -170,7 +170,7 @@ const App = () => {
           <Route
             path="/rh/projetos-pendentes"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <HRPendingProjects />
               </ProtectedRoute>
             }
@@ -178,7 +178,7 @@ const App = () => {
           <Route
             path="/rh/historico"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <HREvaluationHistory />
               </ProtectedRoute>
             }
@@ -186,7 +186,7 @@ const App = () => {
           <Route
             path="/rh/mensagens"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <HRMessages />
               </ProtectedRoute>
             }
@@ -194,7 +194,7 @@ const App = () => {
           <Route
             path="/rh/relatorios"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <HRReports />
               </ProtectedRoute>
             }
@@ -202,7 +202,7 @@ const App = () => {
           <Route
             path="/rh/notificacoes"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <NotificacoesPage />
               </ProtectedRoute>
             }
@@ -210,7 +210,7 @@ const App = () => {
           <Route
             path="/rh/configuracoes"
             element={
-              <ProtectedRoute requiredProfileType="hr">
+              <ProtectedRoute requiredProfileType="rh">
                 <ConfiguracoesPage />
               </ProtectedRoute>
             }
@@ -220,7 +220,7 @@ const App = () => {
           <Route
             path="/gestor"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ManagerPanel />
               </ProtectedRoute>
             }
@@ -228,7 +228,7 @@ const App = () => {
           <Route
             path="/gestor/explorar"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ManagerExplore />
               </ProtectedRoute>
             }
@@ -236,7 +236,7 @@ const App = () => {
           <Route
             path="/gestor/favoritos"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ManagerFavorites />
               </ProtectedRoute>
             }
@@ -244,7 +244,7 @@ const App = () => {
           <Route
             path="/gestor/entrevistas"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ManagerInterviews />
               </ProtectedRoute>
             }
@@ -252,7 +252,7 @@ const App = () => {
           <Route
             path="/gestor/empresa"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ManagerCompany />
               </ProtectedRoute>
             }
@@ -260,7 +260,7 @@ const App = () => {
           <Route
             path="/gestor/notificacoes"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <NotificacoesPage />
               </ProtectedRoute>
             }
@@ -268,7 +268,7 @@ const App = () => {
           <Route
             path="/gestor/configuracoes"
             element={
-              <ProtectedRoute requiredProfileType="manager">
+              <ProtectedRoute requiredProfileType="gestor">
                 <ConfiguracoesPage />
               </ProtectedRoute>
             }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   SidebarProvider,
@@ -33,7 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { ProfileType } from "@/lib/supabase";
+import type { ProfileType } from "@/types/profiles";
 
 interface UserPanelLayoutProps {
   children: React.ReactNode;
@@ -66,18 +66,18 @@ const UserPanelLayout = ({
   };
 
   const userTypeLabel = {
-    talent: "Jovem Talento",
-    hr: "Profissional RH",
-    manager: "Gestor",
+    jovem: "Jovem Talento",
+    rh: "Profissional RH",
+    gestor: "Gestor",
   };
 
   const getBasePath = () => {
     switch (profileType) {
-      case "talent":
+      case "jovem":
         return "/jovem";
-      case "hr":
+      case "rh":
         return "/rh";
-      case "manager":
+      case "gestor":
         return "/gestor";
       default:
         return "/";
@@ -88,7 +88,7 @@ const UserPanelLayout = ({
 
   const getMenuItems = () => {
     switch (profileType) {
-      case "talent":
+      case "jovem":
         return [
           {
             path: "/jovem",
@@ -121,7 +121,7 @@ const UserPanelLayout = ({
             icon: <Inbox className="h-4 w-4" />,
           },
         ];
-      case "hr":
+      case "rh":
         return [
           {
             path: "/rh",
@@ -154,7 +154,7 @@ const UserPanelLayout = ({
             icon: <FileText className="h-4 w-4" />,
           },
         ];
-      case "manager":
+      case "gestor":
         return [
           {
             path: "/gestor",
@@ -178,7 +178,7 @@ const UserPanelLayout = ({
           },
           {
             path: "/gestor/empresa",
-            label: "Minha Empresa",
+            label: "Empresa",
             icon: <Building className="h-4 w-4" />,
           },
         ];
@@ -216,7 +216,7 @@ const UserPanelLayout = ({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="py-2">
+          <SidebarContent>
             <SidebarGroup>
               <SidebarMenu>
                 {menuItems.map((item) => (
@@ -259,7 +259,7 @@ const UserPanelLayout = ({
             </SidebarGroup>
           </SidebarContent>
 
-          <SidebarFooter className="py-2">
+          <SidebarFooter>
             <SidebarSeparator />
             <div className="p-2">
               <Button

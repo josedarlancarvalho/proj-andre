@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const InfoHeader = () => {
@@ -39,10 +38,10 @@ const InfoHeader = () => {
           </div>
           
           <div className="mt-4">
-            <p className="text-sm text-gray-600">
-              Observação: Este é um ambiente de desenvolvimento. Para configurar o ambiente de produção, 
-              será necessário fornecer as credenciais do Supabase nas variáveis de ambiente 
-              VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.
+            <p className="text-sm text-muted-foreground">
+              Para usar a autenticação em produção,
+              será necessário configurar a URL da API na variável de ambiente
+              VITE_API_URL.
             </p>
           </div>
         </div>

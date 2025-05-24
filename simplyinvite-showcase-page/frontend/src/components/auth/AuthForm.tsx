@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { ProfileType } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   Dialog, 
@@ -31,54 +30,32 @@ type CommonFields = {
   password: string;
 };
 
-type TalentFields = CommonFields & {
-  interestArea: string;
-  portfolioLink: string;
-};
-
-type HRFields = CommonFields & {
-  company: string;
-  cnpj: string;
-};
-
-type ManagerFields = CommonFields & {
-  company: string;
-  position: string;
-  talentSearchArea: string;
-};
-
 type AuthFormProps = {
-  userType: ProfileType;
+  userType: "jovem" | "rh" | "gestor";
   isOpen: boolean;
   onClose: () => void;
   onSubmit?: (data: any) => void;
 };
 
-// Esquemas de validação
+// Esquema de validação para login
 const loginSchema = z.object({
-  email: z.string().email({ message: "Email inválido" }),
-  password: z.string().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
 });
 
-const registerCommonSchema = loginSchema.extend({
-  fullName: z.string().min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+// Esquema de validação para registro de jovem talento
+const talentSchema = loginSchema.extend({
+  fullName: z.string().min(3, "Nome completo é obrigatório"),
 });
 
-const talentSchema = registerCommonSchema.extend({
-  interestArea: z.string().min(2, { message: "Informe sua área de interesse" }),
-  portfolioLink: z.string().optional(),
+// Esquema de validação para registro de RH
+const hrSchema = talentSchema.extend({
+  company: z.string().min(2, "Nome da empresa é obrigatório"),
+  position: z.string().min(2, "Cargo é obrigatório"),
 });
 
-const hrSchema = registerCommonSchema.extend({
-  company: z.string().min(2, { message: "Informe o nome da empresa" }),
-  cnpj: z.string().min(14, { message: "CNPJ inválido" }),
-});
-
-const managerSchema = registerCommonSchema.extend({
-  company: z.string().min(2, { message: "Informe o nome da empresa" }),
-  position: z.string().min(2, { message: "Informe seu cargo" }),
-  talentSearchArea: z.string().min(2, { message: "Informe a área de busca de talentos" }),
-});
+// Esquema de validação para registro de gestor
+const managerSchema = hrSchema;
 
 const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
   const [isLogin, setIsLogin] = React.useState(true);
@@ -92,11 +69,11 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
     }
     
     switch (userType) {
-      case "talent":
+      case "jovem":
         return talentSchema;
-      case "hr":
+      case "rh":
         return hrSchema;
-      case "manager":
+      case "gestor":
         return managerSchema;
       default:
         return loginSchema;
@@ -110,24 +87,22 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
       email: "",
       password: "",
       fullName: "",
-      interestArea: "",
-      portfolioLink: "",
       company: "",
-      cnpj: "",
       position: "",
-      talentSearchArea: "",
     },
   });
   
   const handleSubmit = async (data: any) => {
     try {
       if (isLogin) {
-        const result = await signIn(data.email, data.password, userType);
+        const result = await signIn(data.email, data.password);
         if (!result.error) {
           if (onSubmit) onSubmit(data);
         }
       } else {
-        const { error } = await signUp(data.email, data.password, userType, data);
+        const { error } = await signUp(data.email, data.password, userType, {
+          fullName: data.fullName,
+        });
         if (!error) {
           onClose();
           if (onSubmit) onSubmit(data);
@@ -147,18 +122,18 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{
-            userType === "talent"
+            userType === "jovem"
               ? "Área do Jovem Talento"
-              : userType === "hr"
+              : userType === "rh"
               ? "Área do Profissional de RH"
               : "Área do Gestor"
           }</DialogTitle>
           <DialogDescription>{
-            userType === "talent"
+            userType === "jovem"
               ? isLogin
                 ? "Entre para acompanhar seus projetos e feedbacks."
                 : "Crie sua conta para começar a mostrar seu talento."
-              : userType === "hr"
+              : userType === "rh"
               ? isLogin
                 ? "Entre para avaliar e fornecer feedback aos jovens talentos."
                 : "Crie sua conta para começar a avaliar projetos."
@@ -169,7 +144,6 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            {/* Campos comuns para todos os tipos de usuário */}
             {!isLogin && (
               <FormField
                 control={form.control}
@@ -192,7 +166,7 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="seu.email@exemplo.com" {...field} />
+                    <Input type="email" placeholder="seu@email.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -205,77 +179,13 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
                 <FormItem>
                   <FormLabel>Senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input type="password" placeholder="******" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Campos específicos para cada tipo de usuário (apenas mostrados durante o registro) */}
-            {!isLogin && userType === "talent" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="interestArea"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Área de Interesse</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Design, Programação, Marketing" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="portfolioLink"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link de Portfólio/Vídeo</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://..." {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Link para seu portfólio, LinkedIn ou vídeo de apresentação
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            {!isLogin && userType === "hr" && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empresa</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Nome da empresa" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="XX.XXX.XXX/XXXX-XX" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            {!isLogin && userType === "manager" && (
+            {!isLogin && (userType === "rh" || userType === "gestor") && (
               <>
                 <FormField
                   control={form.control}
@@ -297,20 +207,7 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
                     <FormItem>
                       <FormLabel>Cargo</FormLabel>
                       <FormControl>
-                        <Input placeholder="Seu cargo na empresa" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="talentSearchArea"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Área de Busca de Talentos</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Design, Programação, Marketing" {...field} />
+                        <Input placeholder="Seu cargo" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -328,7 +225,7 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
                 className="w-full"
                 onClick={() => setIsLogin(!isLogin)}
               >
-                {isLogin ? "Criar uma conta" : "Já tenho uma conta"}
+                {isLogin ? "Criar conta" : "Já tenho conta"}
               </Button>
             </div>
           </form>

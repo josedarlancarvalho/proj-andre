@@ -45,7 +45,4 @@ router.put('/perfil', rhController.atualizarPerfil);
 // Rota para estatísticas
 router.get('/estatisticas', rhController.buscarEstatisticas);
 
-// Rota para relatórios
-router.get('/relatorios', rhController.buscarRelatorios);
-
 export default router; 

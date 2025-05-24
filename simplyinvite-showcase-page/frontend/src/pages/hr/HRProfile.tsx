@@ -84,7 +84,7 @@ const HRProfile = () => {
   };
 
   return (
-    <UserPanelLayout userName={profile.name} userType="hr">
+    <UserPanelLayout userType="rh">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Perfil da Empresa</h1>

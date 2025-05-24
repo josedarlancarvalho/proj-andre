@@ -2,20 +2,45 @@ import { Model, DataTypes, Sequelize } from 'sequelize';
 
 interface ConviteAttributes {
   id: number;
-  empresaId: number;
   jovemId: number;
+  empresaId: number;
   status: 'pendente' | 'aceito' | 'recusado';
   mensagem?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 class Convite extends Model<ConviteAttributes> implements ConviteAttributes {
   public id!: number;
-  public empresaId!: number;
   public jovemId!: number;
+  public empresaId!: number;
   public status!: 'pendente' | 'aceito' | 'recusado';
   public mensagem?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Métodos de instância
+  public async aceitar() {
+    this.status = 'aceito';
+    return this.save();
+  }
+
+  public async recusar() {
+    this.status = 'recusado';
+    return this.save();
+  }
+
+  public isPendente() {
+    return this.status === 'pendente';
+  }
+
+  public isAceito() {
+    return this.status === 'aceito';
+  }
+
+  public isRecusado() {
+    return this.status === 'recusado';
+  }
 
   // Helper method to define associations
   public static associate(models: any) {
@@ -34,19 +59,19 @@ export default (sequelize: Sequelize) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      empresaId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'empresas',
-          key: 'id',
-        },
-      },
       jovemId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: 'usuarios',
+          model: 'Usuarios',
+          key: 'id',
+        },
+      },
+      empresaId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Empresas',
           key: 'id',
         },
       },
@@ -64,10 +89,16 @@ export default (sequelize: Sequelize) => {
       sequelize,
       modelName: 'Convite',
       tableName: 'convites',
-      timestamps: true,
-      underscored: false,
-      freezeTableName: false
+      // Hooks
+      hooks: {
+        beforeCreate: (convite: Convite) => {
+          if (!convite.status) {
+            convite.status = 'pendente';
+          }
+        }
+      }
     }
   );
+
   return Convite;
 }; 

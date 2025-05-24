@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { Usuario, Empresa } from '../models';
+import db from '../models';
+import { ProfileType } from '../types/profiles';
 
 // Interface para dados de onboarding
 interface OnboardingRequest {
@@ -9,10 +10,19 @@ interface OnboardingRequest {
   educationalBackground?: string;
 }
 
+interface UsuarioResponse {
+  id: number;
+  email: string;
+  nomeCompleto: string;
+  tipoPerfil: ProfileType;
+  avatarUrl?: string;
+  onboardingCompleto: boolean;
+}
+
 export const getAll = async (_req: Request, res: Response) => {
   try {
-    const usuarios = await Usuario.findAll({
-      attributes: { exclude: ['senha'] } // Excluir campo senha da resposta
+    const usuarios = await db.Usuario.findAll({
+      attributes: { exclude: ['senha'] }
     });
     return res.json(usuarios);
   } catch (error) {
@@ -25,7 +35,7 @@ export const getById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const usuario = await Usuario.findByPk(id, {
+    const usuario = await db.Usuario.findByPk(id, {
       attributes: { exclude: ['senha'] }
     });
     
@@ -57,21 +67,21 @@ export const create = async (req: Request, res: Response) => {
     }
 
     // Verificar se o email já existe
-    const usuarioExistente = await Usuario.findOne({ where: { email } });
+    const usuarioExistente = await db.Usuario.findOne({ where: { email } });
     if (usuarioExistente) {
       return res.status(400).json({ message: 'Este email já está em uso' });
     }
 
     // Se for RH ou gestor e tiver empresaId, verificar se a empresa existe
-    if ((tipoPerfil === 'hr' || tipoPerfil === 'manager') && empresaId) {
-      const empresa = await Empresa.findByPk(empresaId);
+    if ((tipoPerfil === 'rh' || tipoPerfil === 'gestor') && empresaId) {
+      const empresa = await db.Empresa.findByPk(empresaId);
       if (!empresa) {
         return res.status(400).json({ message: 'Empresa não encontrada' });
       }
     }
 
     // Criar o usuário
-    const usuario = await Usuario.create({
+    const usuario = await db.Usuario.create({
       email,
       senha, // O hook beforeCreate no modelo fará o hash da senha
       nomeCompleto,
@@ -88,11 +98,12 @@ export const create = async (req: Request, res: Response) => {
       dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
       areasInteresse,
       habilidadesPrincipais,
-      onboardingComplete: false
+      onboardingCompleto: false
     });
 
     // Retornar o usuário criado sem a senha
     const usuarioSemSenha = usuario.toJSON();
+    delete usuarioSemSenha.senha;
 
     return res.status(201).json(usuarioSemSenha);
   } catch (error) {
@@ -106,7 +117,7 @@ export const update = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     // Verificar se o usuário existe
-    const usuario = await Usuario.findByPk(id);
+    const usuario = await db.Usuario.findByPk(id);
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
@@ -115,7 +126,7 @@ export const update = async (req: Request, res: Response) => {
     await usuario.update(req.body);
     
     // Retornar o usuário atualizado sem a senha
-    const usuarioAtualizado = await Usuario.findByPk(id, {
+    const usuarioAtualizado = await db.Usuario.findByPk(id, {
       attributes: { exclude: ['senha'] }
     });
     
@@ -131,7 +142,7 @@ export const remove = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     // Verificar se o usuário existe
-    const usuario = await Usuario.findByPk(id);
+    const usuario = await db.Usuario.findByPk(id);
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
@@ -148,13 +159,13 @@ export const remove = async (req: Request, res: Response) => {
 
 export const completarOnboarding = async (req: Request, res: Response) => {
   try {
-    if (!req.currentUser) {
+    if (!req.usuario) {
       return res.status(401).json({ message: 'Não autorizado: Usuário não autenticado' });
     }
 
     const { experiences, portfolioLinks, educationalBackground } = req.body as OnboardingRequest;
 
-    const usuario = await Usuario.findByPk(req.currentUser.id);
+    const usuario = await db.Usuario.findByPk(req.usuario.id);
     if (!usuario) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
@@ -169,17 +180,17 @@ export const completarOnboarding = async (req: Request, res: Response) => {
     // Você poderia adicionar um novo campo para formação acadêmica
     // ou usar outro campo existente para educational background
 
-    usuario.onboardingComplete = true;
+    usuario.onboardingCompleto = true;
     await usuario.save();
 
     // Criar objeto de resposta
-    const usuarioResponse = {
+    const usuarioResponse: UsuarioResponse = {
       id: usuario.id,
       email: usuario.email,
       nomeCompleto: usuario.nomeCompleto,
-      tipoPerfil: usuario.tipoPerfil,
+      tipoPerfil: usuario.tipoPerfil as ProfileType,
       avatarUrl: usuario.avatarUrl,
-      onboardingComplete: usuario.onboardingComplete
+      onboardingCompleto: usuario.onboardingCompleto
     };
 
     return res.json(usuarioResponse);
@@ -194,7 +205,7 @@ export const getPerfilUsuario = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     // Buscar o usuário primeiro para verificar o tipoPerfil
-    const usuarioBasico = await Usuario.findByPk(id, {
+    const usuarioBasico = await db.Usuario.findByPk(id, {
       attributes: { exclude: ['senha'] }
     });
     
@@ -205,14 +216,14 @@ export const getPerfilUsuario = async (req: Request, res: Response) => {
     // Definir includes baseado no tipo de perfil
     let includes = [];
     
-    if (usuarioBasico.tipoPerfil === 'talent') {
+    if (usuarioBasico.tipoPerfil === 'jovem') {
       includes = [{ association: 'projetos' }];
-    } else if (usuarioBasico.tipoPerfil === 'hr' || usuarioBasico.tipoPerfil === 'manager') {
+    } else if (usuarioBasico.tipoPerfil === 'rh' || usuarioBasico.tipoPerfil === 'gestor') {
       includes = [{ association: 'empresa' }];
     }
     
     // Buscar novamente com os includes apropriados
-    const usuario = await Usuario.findByPk(id, {
+    const usuario = await db.Usuario.findByPk(id, {
       attributes: { exclude: ['senha'] },
       include: includes
     });

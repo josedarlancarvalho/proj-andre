@@ -69,7 +69,7 @@ export const enviarFeedback: RequestHandler = async (req, res) => {
 export const buscarTalentos: RequestHandler = async (req, res) => {
   try {
     const talentos = await db.Usuario.findAll({
-      where: { tipoPerfil: 'talent' },
+      where: { tipoPerfil: 'jovem' },
       attributes: { exclude: ['senha'] }
     });
     res.json(talentos);
@@ -109,7 +109,7 @@ export const buscarTalentosDestaque: RequestHandler = async (req, res) => {
   try {
     const talentos = await db.Usuario.findAll({
       where: { 
-        tipoPerfil: 'talent',
+        tipoPerfil: 'jovem',
         [Op.or]: [
           { '$projetos.status$': 'destacado' },
           { '$avaliacoes.medalha$': { [Op.not]: null } }
