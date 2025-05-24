@@ -1,39 +1,37 @@
 import { Model, DataTypes, Sequelize } from 'sequelize';
-import sequelizeInstance from '../config/database';
-import Usuario from './Usuario';
-import Projeto from './Projeto';
 
-interface AvaliacaoAttributes {
-  id: number;
-  projetoId: number;
-  avaliadorId: number;
-  nota: number;
-  comentario: string;
-  medalha?: 'ouro' | 'prata' | 'bronze';
-  encaminhadoParaGestor: boolean;
+interface Oportunidade {
+  tipo: 'estagio' | 'trainee' | 'junior';
+  descricao: string;
 }
 
-class Avaliacao extends Model<AvaliacaoAttributes> implements AvaliacaoAttributes {
+interface FeedbackAttributes {
+  id: number;
+  projetoId: number;
+  gestorId: number;
+  comentario: string;
+  oportunidade?: Oportunidade;
+}
+
+class Feedback extends Model<FeedbackAttributes> implements FeedbackAttributes {
   public id!: number;
   public projetoId!: number;
-  public avaliadorId!: number;
-  public nota!: number;
+  public gestorId!: number;
   public comentario!: string;
-  public medalha?: 'ouro' | 'prata' | 'bronze';
-  public encaminhadoParaGestor!: boolean;
+  public oportunidade?: Oportunidade;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
   // Helper method to define associations
   public static associate(models: any) {
     this.belongsTo(models.Projeto, { foreignKey: 'projetoId', as: 'projeto' });
-    this.belongsTo(models.Usuario, { foreignKey: 'avaliadorId', as: 'avaliador' });
+    this.belongsTo(models.Usuario, { foreignKey: 'gestorId', as: 'gestor' });
     // Add other associations if needed
   }
 }
 
 export default (sequelize: Sequelize) => {
-  Avaliacao.init(
+  Feedback.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -48,7 +46,7 @@ export default (sequelize: Sequelize) => {
           key: 'id',
         },
       },
-      avaliadorId: {
+      gestorId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -56,31 +54,23 @@ export default (sequelize: Sequelize) => {
           key: 'id',
         },
       },
-      nota: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
       comentario: {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      medalha: {
-        type: DataTypes.ENUM('ouro', 'prata', 'bronze'),
+      oportunidade: {
+        type: DataTypes.JSONB,
         allowNull: true,
-      },
-      encaminhadoParaGestor: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
       },
     },
     {
       sequelize,
-      modelName: 'Avaliacao',
-      tableName: 'avaliacoes',
+      modelName: 'Feedback',
+      tableName: 'feedbacks',
       timestamps: true,
       underscored: false,
       freezeTableName: false
     }
   );
-  return Avaliacao;
+  return Feedback;
 }; 

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
-import { Empresa, Usuario } from '../models';
+import db from '../models';
 
 export const getAll = async (_req: Request, res: Response) => {
   try {
-    const empresas = await Empresa.findAll();
+    const empresas = await db.Empresa.findAll();
     return res.json(empresas);
   } catch (error) {
     console.error('Erro ao listar empresas:', error);
@@ -15,9 +15,9 @@ export const getById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const empresa = await Empresa.findByPk(id, {
+    const empresa = await db.Empresa.findByPk(id, {
       include: [{ 
-        model: Usuario, 
+        model: db.Usuario, 
         as: 'usuarios',
         attributes: { exclude: ['senha'] }
       }]
@@ -44,13 +44,13 @@ export const create = async (req: Request, res: Response) => {
     }
 
     // Verificar se já existe empresa com o mesmo CNPJ
-    const empresaExistente = await Empresa.findOne({ where: { cnpj } });
+    const empresaExistente = await db.Empresa.findOne({ where: { cnpj } });
     if (empresaExistente) {
       return res.status(400).json({ message: 'Já existe uma empresa com este CNPJ' });
     }
 
     // Criar a empresa
-    const empresa = await Empresa.create({
+    const empresa = await db.Empresa.create({
       nome,
       cnpj,
       descricao,
@@ -70,7 +70,7 @@ export const update = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     // Verificar se a empresa existe
-    const empresa = await Empresa.findByPk(id);
+    const empresa = await db.Empresa.findByPk(id);
     if (!empresa) {
       return res.status(404).json({ message: 'Empresa não encontrada' });
     }
@@ -79,7 +79,7 @@ export const update = async (req: Request, res: Response) => {
     await empresa.update(req.body);
     
     // Retornar a empresa atualizada
-    const empresaAtualizada = await Empresa.findByPk(id);
+    const empresaAtualizada = await db.Empresa.findByPk(id);
     
     return res.json(empresaAtualizada);
   } catch (error) {
@@ -93,13 +93,13 @@ export const remove = async (req: Request, res: Response) => {
     const { id } = req.params;
     
     // Verificar se a empresa existe
-    const empresa = await Empresa.findByPk(id);
+    const empresa = await db.Empresa.findByPk(id);
     if (!empresa) {
       return res.status(404).json({ message: 'Empresa não encontrada' });
     }
     
     // Verificar se existem usuários vinculados à empresa
-    const usuarios = await Usuario.findOne({ where: { empresaId: id } });
+    const usuarios = await db.Usuario.findOne({ where: { empresaId: id } });
     if (usuarios) {
       return res.status(400).json({ 
         message: 'Não é possível excluir esta empresa pois existem usuários vinculados a ela' 

@@ -1,78 +1,87 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
-import Usuario from './Usuario';
+import { Model, DataTypes, Sequelize } from 'sequelize';
 
-class Projeto extends Model {
+interface ProjetoAttributes {
+  id: number;
+  titulo: string;
+  descricao: string;
+  tecnologias: string[];
+  linkRepositorio?: string;
+  linkDeploy?: string;
+  status: 'pendente' | 'avaliado' | 'destacado';
+  usuarioId: number;
+}
+
+class Projeto extends Model<ProjetoAttributes> implements ProjetoAttributes {
   public id!: number;
   public titulo!: string;
   public descricao!: string;
-  public categoria?: string;
-  public thumbnailUrl?: string;
-  public videoUrl?: string;
-  public linkProjetoExterno?: string;
-  public statusSubmissao?: string; // pendente, aprovado, rejeitado
-  public dataEnvio?: Date;
+  public tecnologias!: string[];
+  public linkRepositorio?: string;
+  public linkDeploy?: string;
+  public status!: 'pendente' | 'avaliado' | 'destacado';
   public usuarioId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Helper method to define associations
+  public static associate(models: any) {
+    this.belongsTo(models.Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
+    this.hasMany(models.Avaliacao, { foreignKey: 'projetoId', as: 'avaliacoes' });
+    this.hasMany(models.Feedback, { foreignKey: 'projetoId', as: 'feedbacks' });
+  }
 }
 
-Projeto.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true
+export default (sequelize: Sequelize) => {
+  Projeto.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      titulo: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      descricao: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      tecnologias: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: false,
+        defaultValue: [],
+      },
+      linkRepositorio: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      linkDeploy: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      status: {
+        type: DataTypes.ENUM('pendente', 'avaliado', 'destacado'),
+        allowNull: false,
+        defaultValue: 'pendente',
+      },
+      usuarioId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'usuarios',
+          key: 'id',
+        },
+      },
     },
-    titulo: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    descricao: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    },
-    categoria: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    thumbnailUrl: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    videoUrl: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    linkProjetoExterno: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    statusSubmissao: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    dataEnvio: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    usuarioId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Usuario,
-        key: 'id'
-      }
+    {
+      sequelize,
+      modelName: 'Projeto',
+      tableName: 'projetos',
+      timestamps: true,
+      underscored: false,
+      freezeTableName: false
     }
-  },
-  {
-    sequelize,
-    modelName: 'projeto',
-    tableName: 'projetos'
-  }
-);
-
-// Define relações
-Projeto.belongsTo(Usuario, { foreignKey: 'usuarioId', as: 'usuario' });
-
-export default Projeto; 
+  );
+  return Projeto;
+}; 

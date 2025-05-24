@@ -1,61 +1,47 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '../utils/jwt';
-import { Usuario } from '../models';
+import jwt from 'jsonwebtoken';
 
-// Extender interface Request para incluir usuário autenticado
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+interface DecodedToken {
+  id: number;
+  email: string;
+  tipoPerfil: 'jovem' | 'rh' | 'gestor';
+}
+
 declare global {
   namespace Express {
     interface Request {
-      currentUser?: any;
+      usuario?: DecodedToken;
     }
   }
 }
 
-export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Pegar o token do cabeçalho Authorization
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Não autorizado: Token não fornecido' });
-    }
-
-    // Extrair o token sem o prefixo 'Bearer '
-    const token = authHeader.split(' ')[1];
+    const token = req.headers.authorization?.split(' ')[1];
     
-    // Verificar o token
-    const decodedToken = verifyToken(token);
-    if (!decodedToken) {
-      return res.status(401).json({ message: 'Não autorizado: Token inválido' });
+    if (!token) {
+      return res.status(401).json({ message: 'Token não fornecido' });
     }
 
-    // Buscar usuário no banco de dados
-    const usuario = await Usuario.findByPk(decodedToken.id);
-    if (!usuario) {
-      return res.status(401).json({ message: 'Não autorizado: Usuário não encontrado' });
-    }
-
-    // Passar o usuário para o request para uso nos controllers
-    req.currentUser = usuario;
+    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
+    req.usuario = decoded;
+    
     next();
   } catch (error) {
-    console.error('Erro de autenticação:', error);
-    res.status(401).json({ message: 'Erro de autenticação' });
+    return res.status(401).json({ message: 'Token inválido' });
   }
 };
 
-// Middleware para verificar o tipo de perfil
-export const checkProfileType = (profileTypes: string[]) => {
+export const checkRole = (role: 'jovem' | 'rh' | 'gestor') => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.currentUser) {
-      return res.status(401).json({ message: 'Não autorizado: Usuário não autenticado' });
+    const usuario = req.usuario;
+    
+    if (!usuario || usuario.tipoPerfil !== role) {
+      return res.status(403).json({ message: 'Acesso não autorizado' });
     }
-
-    if (!profileTypes.includes(req.currentUser.tipoPerfil)) {
-      return res.status(403).json({ 
-        message: `Acesso negado: Apenas perfis ${profileTypes.join(', ')} podem acessar este recurso` 
-      });
-    }
-
+    
     next();
   };
 }; 

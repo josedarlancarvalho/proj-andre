@@ -1,87 +1,73 @@
-import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
-import Usuario from './Usuario';
-import Projeto from './Projeto';
+import { Model, DataTypes, Sequelize } from 'sequelize';
 
-export enum StatusConvite {
-  PENDENTE = 'PENDENTE',
-  ACEITO = 'ACEITO',
-  REJEITADO = 'REJEITADO'
+interface ConviteAttributes {
+  id: number;
+  empresaId: number;
+  jovemId: number;
+  status: 'pendente' | 'aceito' | 'recusado';
+  mensagem?: string;
 }
 
-class Convite extends Model {
+class Convite extends Model<ConviteAttributes> implements ConviteAttributes {
   public id!: number;
+  public empresaId!: number;
+  public jovemId!: number;
+  public status!: 'pendente' | 'aceito' | 'recusado';
   public mensagem?: string;
-  public status!: StatusConvite;
-  public dataEnvio!: Date;
-  public dataResposta?: Date;
-  public remetenteId!: number;
-  public destinatarioId!: number;
-  public projetoId!: number;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
+
+  // Helper method to define associations
+  public static associate(models: any) {
+    this.belongsTo(models.Usuario, { foreignKey: 'jovemId', as: 'jovem' });
+    this.belongsTo(models.Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+    // Add other associations if needed, e.g. if a convite is tied to a specific Projeto
+    // this.belongsTo(models.Projeto, { foreignKey: 'projetoId', as: 'projeto' }); 
+  }
 }
 
-Convite.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true
+export default (sequelize: Sequelize) => {
+  Convite.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      empresaId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'empresas',
+          key: 'id',
+        },
+      },
+      jovemId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'usuarios',
+          key: 'id',
+        },
+      },
+      status: {
+        type: DataTypes.ENUM('pendente', 'aceito', 'recusado'),
+        allowNull: false,
+        defaultValue: 'pendente',
+      },
+      mensagem: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     },
-    mensagem: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    status: {
-      type: DataTypes.ENUM('PENDENTE', 'ACEITO', 'REJEITADO'),
-      allowNull: false,
-      defaultValue: 'PENDENTE'
-    },
-    dataEnvio: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW
-    },
-    dataResposta: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    remetenteId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Usuario,
-        key: 'id'
-      }
-    },
-    destinatarioId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Usuario,
-        key: 'id'
-      }
-    },
-    projetoId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: Projeto,
-        key: 'id'
-      }
+    {
+      sequelize,
+      modelName: 'Convite',
+      tableName: 'convites',
+      timestamps: true,
+      underscored: false,
+      freezeTableName: false
     }
-  },
-  {
-    sequelize,
-    modelName: 'convite',
-    tableName: 'convites'
-  }
-);
-
-// Define relações
-Convite.belongsTo(Usuario, { foreignKey: 'remetenteId', as: 'remetente' });
-Convite.belongsTo(Usuario, { foreignKey: 'destinatarioId', as: 'destinatario' });
-Convite.belongsTo(Projeto, { foreignKey: 'projetoId', as: 'projeto' });
-
-export default Convite; 
+  );
+  return Convite;
+}; 

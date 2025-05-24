@@ -1,32 +1,35 @@
+import { Sequelize } from 'sequelize';
+import sequelize from '../config/database';
+
+// Import models
 import Usuario from './Usuario';
 import Empresa from './Empresa';
 import Projeto from './Projeto';
 import Avaliacao from './Avaliacao';
 import Convite from './Convite';
-import sequelize from '../config/database';
+import Feedback from './Feedback';
+import Favorito from './Favorito';
 
-// Associações entre modelos
+// Initialize models
+const models = {
+  Usuario: Usuario(sequelize),
+  Empresa: Empresa(sequelize),
+  Projeto: Projeto(sequelize),
+  Avaliacao: Avaliacao(sequelize),
+  Convite: Convite(sequelize),
+  Feedback: Feedback(sequelize),
+  Favorito: Favorito(sequelize)
+};
 
-// Empresa tem muitos Usuários (RH/Gestores)
-Empresa.hasMany(Usuario, { foreignKey: 'empresaId', as: 'usuarios' });
-Usuario.belongsTo(Empresa, { foreignKey: 'empresaId', as: 'empresa' });
+// Run associations
+Object.values(models).forEach((model: any) => {
+  if (model.associate) {
+    model.associate(models);
+  }
+});
 
-// Usuario tem muitos Projetos
-Usuario.hasMany(Projeto, { foreignKey: 'usuarioId', as: 'projetos' });
-
-// Usuario tem muitas Avaliações (como avaliador)
-Usuario.hasMany(Avaliacao, { foreignKey: 'avaliadorId', as: 'avaliacoesFeitas' });
-
-// Projeto tem muitas Avaliações
-Projeto.hasMany(Avaliacao, { foreignKey: 'projetoId', as: 'avaliacoes' });
-
-// Convites já têm suas associações definidas no próprio modelo
-
-export {
+export default {
   sequelize,
-  Usuario,
-  Empresa,
-  Projeto,
-  Avaliacao,
-  Convite
+  Sequelize,
+  ...models
 }; 

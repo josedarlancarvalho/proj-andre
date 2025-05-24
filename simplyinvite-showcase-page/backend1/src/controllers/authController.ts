@@ -1,56 +1,59 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import { Usuario } from '../models';
-import { generateToken } from '../utils/jwt';
+import jwt from 'jsonwebtoken';
+import { RequestHandler } from '../types/controller';
+import db from '../models';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 interface LoginRequest {
   email: string;
   senha: string;
+  tipoPerfil: 'jovem' | 'rh' | 'gestor';
 }
 
-export const login = async (req: Request, res: Response) => {
+export const login: RequestHandler = async (req, res) => {
   try {
-    const { email, senha } = req.body as LoginRequest;
+    const { email, senha, tipoPerfil } = req.body as LoginRequest;
 
-    // Verificar se o email foi fornecido
-    if (!email) {
-      return res.status(400).json({ message: 'Email é obrigatório' });
+    if (!email || !senha) {
+      return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
 
-    // Buscar usuário pelo email
-    const usuario = await Usuario.findOne({ where: { email } });
+    const usuario = await db.Usuario.findOne({
+      where: { 
+        email,
+        tipoPerfil
+      }
+    });
+
     if (!usuario) {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    // Verificar senha
     const senhaValida = await usuario.validarSenha(senha);
     if (!senhaValida) {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    // Gerar token JWT
-    const token = generateToken({
-      id: usuario.id,
-      email: usuario.email,
-      tipoPerfil: usuario.tipoPerfil
-    });
+    const token = jwt.sign(
+      {
+        id: usuario.id,
+        email: usuario.email,
+        tipoPerfil: usuario.tipoPerfil
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
-    // Criar objeto de resposta (similar ao backend original)
-    const usuarioResponse = {
-      id: usuario.id,
-      email: usuario.email,
-      nomeCompleto: usuario.nomeCompleto,
-      tipoPerfil: usuario.tipoPerfil,
-      avatarUrl: usuario.avatarUrl,
-      onboardingComplete: usuario.onboardingComplete
-    };
-
-    // Enviar resposta
     return res.json({
       token,
-      tipoPerfil: usuario.tipoPerfil,
-      usuario: usuarioResponse
+      usuario: {
+        id: usuario.id,
+        email: usuario.email,
+        nomeCompleto: usuario.nomeCompleto,
+        tipoPerfil: usuario.tipoPerfil,
+        onboardingCompleto: usuario.onboardingCompleto
+      }
     });
   } catch (error) {
     console.error('Erro no login:', error);
@@ -58,27 +61,54 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getMeuPerfil = async (req: Request, res: Response) => {
+export const verificarToken: RequestHandler = async (req, res) => {
   try {
-    // O middleware de autenticação já coloca o usuário atual em req.currentUser
-    if (!req.currentUser) {
+    const token = req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ message: 'Token não fornecido' });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
+    const usuario = await db.Usuario.findByPk(decoded.id);
+
+    if (!usuario) {
+      return res.status(401).json({ message: 'Usuário não encontrado' });
+    }
+
+    return res.json({
+      usuario: {
+        id: usuario.id,
+        email: usuario.email,
+        nomeCompleto: usuario.nomeCompleto,
+        tipoPerfil: usuario.tipoPerfil,
+        onboardingCompleto: usuario.onboardingCompleto
+      }
+    });
+  } catch (error) {
+    return res.status(401).json({ message: 'Token inválido' });
+  }
+};
+
+export const getMeuPerfil: RequestHandler = async (req, res) => {
+  try {
+    if (!req.usuario) {
       return res.status(401).json({ 
         message: 'Não autorizado: Nenhum usuário autenticado encontrado.' 
       });
     }
 
-    const usuarioResponse = {
-      id: req.currentUser.id,
-      email: req.currentUser.email,
-      nomeCompleto: req.currentUser.nomeCompleto,
-      tipoPerfil: req.currentUser.tipoPerfil,
-      avatarUrl: req.currentUser.avatarUrl,
-      onboardingComplete: req.currentUser.onboardingComplete
-    };
+    const usuario = await db.Usuario.findByPk(req.usuario.id, {
+      attributes: { exclude: ['senha'] }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
     
     return res.json({
-      usuario: usuarioResponse,
-      tipoPerfil: req.currentUser.tipoPerfil
+      usuario: usuario,
+      tipoPerfil: usuario.tipoPerfil
     });
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
