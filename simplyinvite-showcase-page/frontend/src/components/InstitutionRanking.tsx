@@ -8,8 +8,12 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, ChartBar, ChartPie, ChartLine } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Trophy,
+  BarChart as BarChartIcon,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon,
+} from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -25,6 +29,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ChartContainer,
   ChartTooltip,
@@ -96,10 +101,10 @@ const InstitutionRanking = () => {
   ];
 
   const yearsSet = new Set<string>();
-  institutionsList.forEach(inst => {
-    inst.yearlyHires?.forEach(yh => yearsSet.add(yh.year));
+  institutionsList.forEach((inst) => {
+    inst.yearlyHires?.forEach((yh) => yearsSet.add(yh.year));
   });
-  const years = Array.from(yearsSet).sort(); 
+  const years = Array.from(yearsSet).sort();
 
   const lineChartData = years.map((year) => {
     const dataPoint: any = { year };
@@ -116,19 +121,25 @@ const InstitutionRanking = () => {
     return (
       <section id="ranking" className="py-20 bg-gray-50">
         <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">Ranking de Instituições</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
+            Ranking de Instituições
+          </h2>
           <p className="text-gray-600">Carregando dados do ranking...</p>
         </div>
       </section>
     );
   }
-  
+
   if (institutionsList.length === 0 && !isLoading) {
     return (
       <section id="ranking" className="py-20 bg-gray-50">
         <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">Ranking de Instituições</h2>
-          <p className="text-gray-600">Nenhum dado de ranking disponível no momento.</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
+            Ranking de Instituições
+          </h2>
+          <p className="text-gray-600">
+            Nenhum dado de ranking disponível no momento.
+          </p>
         </div>
       </section>
     );
@@ -159,15 +170,15 @@ const InstitutionRanking = () => {
                 Tabela
               </TabsTrigger>
               <TabsTrigger value="bar" className="flex items-center gap-1">
-                <ChartBar className="w-4 h-4" />
+                <BarChartIcon className="w-4 h-4" />
                 Gráfico de Barras
               </TabsTrigger>
               <TabsTrigger value="pie" className="flex items-center gap-1">
-                <ChartPie className="w-4 h-4" />
+                <PieChartIcon className="w-4 h-4" />
                 Gráfico de Pizza
               </TabsTrigger>
               <TabsTrigger value="line" className="flex items-center gap-1">
-                <ChartLine className="w-4 h-4" />
+                <LineChartIcon className="w-4 h-4" />
                 Evolução Anual
               </TabsTrigger>
             </TabsList>
@@ -276,7 +287,7 @@ const InstitutionRanking = () => {
             <Card className="shadow-lg">
               <CardHeader className="bg-si-blue text-white">
                 <CardTitle className="flex items-center justify-center text-center">
-                  <ChartBar className="mr-2 h-6 w-6" />
+                  <BarChartIcon className="mr-2 h-6 w-6" />
                   Top 5 Instituições por Contratações
                 </CardTitle>
               </CardHeader>
@@ -320,7 +331,7 @@ const InstitutionRanking = () => {
             <Card className="shadow-lg">
               <CardHeader className="bg-si-blue text-white">
                 <CardTitle className="flex items-center justify-center text-center">
-                  <ChartPie className="mr-2 h-6 w-6" />
+                  <PieChartIcon className="mr-2 h-6 w-6" />
                   Contratações por Tipo de Instituição
                 </CardTitle>
               </CardHeader>
@@ -358,7 +369,7 @@ const InstitutionRanking = () => {
             <Card className="shadow-lg">
               <CardHeader className="bg-si-blue text-white">
                 <CardTitle className="flex items-center justify-center text-center">
-                  <ChartLine className="mr-2 h-6 w-6" />
+                  <LineChartIcon className="mr-2 h-6 w-6" />
                   Evolução Anual de Contratações
                 </CardTitle>
               </CardHeader>

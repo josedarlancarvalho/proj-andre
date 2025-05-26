@@ -2,27 +2,27 @@ import React, { useState, useEffect } from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatCard from "@/components/panels/StatCard";
-import { Medal, Clock, FileText, Calendar, ChartPie } from "lucide-react";
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
+import { Medal, Clock, FileText, Calendar, PieChart } from "lucide-react";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
 // You would normally import these from recharts
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  LineChart, 
-  Line 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
 } from "recharts";
 
 // Interfaces for report data
@@ -76,7 +76,12 @@ const HRReports = () => {
       ]);
       setCategoryData([]);
       setYearlyData([]);
-      setReportStats({ projectsEvaluatedMonthly: 0, avgEvaluationTime: "0min", medalsDistributed: 0, interviewInvites: 0 });
+      setReportStats({
+        projectsEvaluatedMonthly: 0,
+        avgEvaluationTime: "0min",
+        medalsDistributed: 0,
+        interviewInvites: 0,
+      });
     };
     fetchReportData();
   }, []);
@@ -95,25 +100,25 @@ const HRReports = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <StatCard 
+          <StatCard
             title="Projetos Avaliados"
             value={String(reportStats.projectsEvaluatedMonthly)}
             description="Total do mês atual"
             icon={<FileText className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Tempo Médio"
             value={reportStats.avgEvaluationTime}
             description="Por avaliação"
             icon={<Clock className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Medalhas"
             value={String(reportStats.medalsDistributed)}
             description="Distribuídas"
             icon={<Medal className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Convites"
             value={String(reportStats.interviewInvites)}
             description="Para entrevistas"
@@ -135,24 +140,32 @@ const HRReports = () => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="total" name="Projetos Avaliados" fill="#9b87f5" />
+                    <Bar
+                      dataKey="total"
+                      name="Projetos Avaliados"
+                      fill="#9b87f5"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (<p className="text-center text-muted-foreground">Dados de avaliações mensais indisponíveis.</p>)}
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  Dados de avaliações mensais indisponíveis.
+                </p>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ChartPie className="h-5 w-5" />
+                <PieChart className="h-5 w-5" />
                 Distribuição de Medalhas
               </CardTitle>
             </CardHeader>
             <CardContent className="h-80">
-              {medalData.some(m => m.value > 0) ? (
+              {medalData.some((m) => m.value > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <RechartsPieChart>
                     <Pie
                       data={medalData}
                       cx="50%"
@@ -162,16 +175,22 @@ const HRReports = () => {
                       fill="#8884d8"
                       dataKey="value"
                       nameKey="name"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {medalData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip />
-                  </PieChart>
+                  </RechartsPieChart>
                 </ResponsiveContainer>
-              ) : (<p className="text-center text-muted-foreground">Dados de distribuição de medalhas indisponíveis.</p>)}
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  Dados de distribuição de medalhas indisponíveis.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -192,33 +211,45 @@ const HRReports = () => {
                   <Bar dataKey="total" name="Quantidade" fill="#0EA5E9" />
                 </BarChart>
               </ResponsiveContainer>
-            ) : (<p className="text-center text-muted-foreground">Dados de projetos por categoria indisponíveis.</p>)}
+            ) : (
+              <p className="text-center text-muted-foreground">
+                Dados de projetos por categoria indisponíveis.
+              </p>
+            )}
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
-            <CardTitle>Evolução Anual de Contratações (Exemplo)</CardTitle> {/* Adjusted title to reflect example if data is static-ish */}
+            <CardTitle>Evolução Anual de Contratações (Exemplo)</CardTitle>{" "}
+            {/* Adjusted title to reflect example if data is static-ish */}
           </CardHeader>
           <CardContent className="h-80">
             {yearlyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={yearlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <LineChart
+                  data={yearlyData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
-                  <YAxis domain={['dataMin - 10', 'dataMax + 10']} />
+                  <YAxis domain={["dataMin - 10", "dataMax + 10"]} />
                   <Tooltip />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="total" 
-                    name="Total de Contratações" 
-                    stroke="#9b87f5" 
-                    activeDot={{ r: 8 }} 
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    name="Total de Contratações"
+                    stroke="#9b87f5"
+                    activeDot={{ r: 8 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
-            ) : (<p className="text-center text-muted-foreground">Dados de evolução anual indisponíveis.</p>)}
+            ) : (
+              <p className="text-center text-muted-foreground">
+                Dados de evolução anual indisponíveis.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
