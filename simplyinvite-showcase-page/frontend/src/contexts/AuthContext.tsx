@@ -22,7 +22,8 @@ interface AuthContextType {
   profileType: ProfileType | null;
   signIn: (
     email: string,
-    password: string
+    password: string,
+    tipoPerfil?: ProfileType
   ) => Promise<{ error?: any }>;
   signUp: (
     email: string,
@@ -60,7 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           if (data && data.usuario) {
             setUser(data.usuario);
-            setProfileType(data.tipoPerfil as ProfileType);
+            // Normaliza o tipoPerfil para evitar problemas de maiúsculas/minúsculas/espacos
+            const tipoPerfilNormalizado = (data.tipoPerfil || "").toLowerCase().trim();
+            setProfileType(tipoPerfilNormalizado as ProfileType);
           } else {
             localStorage.removeItem("token");
             setUser(null);
@@ -84,18 +87,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signIn = async (
     email: string,
-    password: string
+    password: string,
+    tipoPerfil?: ProfileType
   ): Promise<{ error?: any }> => {
     try {
       setLoading(true);
-      const data = await login(email, password);
+      const perfil = tipoPerfil || profileType || "jovem";
+      const data = await login(email, password, perfil);
 
       if (data && data.token && data.usuario) {
         localStorage.setItem("token", data.token);
         setUser(data.usuario);
-        setProfileType(data.tipoPerfil as ProfileType);
+        // Normaliza o tipoPerfil para evitar problemas de maiúsculas/minúsculas/espacos
+        const tipoPerfilNormalizado = (data.tipoPerfil || "").toLowerCase().trim();
+        setProfileType(tipoPerfilNormalizado as ProfileType);
 
-        switch (data.tipoPerfil) {
+        switch (tipoPerfilNormalizado) {
           case "jovem":
             navigate("/jovem");
             break;

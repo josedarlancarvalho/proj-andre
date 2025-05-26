@@ -23,6 +23,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      tipoPerfil: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
     {
       tableName: "usuarios",
@@ -44,6 +48,14 @@ module.exports = (sequelize) => {
       },
     }
   );
+
+  // Adiciona o método de instância para validar senha
+  Usuario.prototype.validarSenha = async function (senha) {
+    if (!this.senha) {
+      throw new Error('Senha do usuário não está definida.');
+    }
+    return bcrypt.compare(senha, this.senha);
+  };
 
   // Método de associação
   // Usuario.associate = (models: any) => {

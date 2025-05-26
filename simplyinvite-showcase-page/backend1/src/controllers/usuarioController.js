@@ -1,6 +1,5 @@
 const db = require("../models");
 const bcrypt = require("bcryptjs");
-const { ProfileType } = require("../types/profiles");
 
 // Interface para dados de onboarding
 const OnboardingRequest = {
@@ -8,15 +7,6 @@ const OnboardingRequest = {
   portfolioLinks: { type: String },
   educationalBackground: { type: String },
 };
-
-interface UsuarioResponse {
-  id: number;
-  email: string;
-  nomeCompleto: string;
-  tipoPerfil: ProfileType;
-  avatarUrl?: string;
-  onboardingCompleto: boolean;
-}
 
 exports.getAll = async (_req, res) => {
   try {
@@ -169,7 +159,7 @@ exports.remove = async (req, res) => {
   }
 };
 
-export const completarOnboarding = async (req: Request, res: Response) => {
+exports.completarOnboarding = async (req, res) => {
   try {
     if (!req.usuario) {
       return res
@@ -177,10 +167,9 @@ export const completarOnboarding = async (req: Request, res: Response) => {
         .json({ message: "Não autorizado: Usuário não autenticado" });
     }
 
-    const { experiences, portfolioLinks, educationalBackground } =
-      req.body as OnboardingRequest;
+    const { experiences, portfolioLinks, educationalBackground } = req.body;
 
-    const usuario: any = await db.Usuario.findByPk(req.usuario.id);
+    const usuario = await db.Usuario.findByPk(req.usuario.id);
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
@@ -199,11 +188,11 @@ export const completarOnboarding = async (req: Request, res: Response) => {
     await usuario.save();
 
     // Criar objeto de resposta
-    const usuarioResponse: UsuarioResponse = {
+    const usuarioResponse = {
       id: usuario.id,
       email: usuario.email,
       nomeCompleto: usuario.nomeCompleto,
-      tipoPerfil: usuario.tipoPerfil as ProfileType,
+      tipoPerfil: usuario.tipoPerfil,
       avatarUrl: usuario.avatarUrl,
       onboardingCompleto: usuario.onboardingCompleto,
     };
@@ -215,12 +204,12 @@ export const completarOnboarding = async (req: Request, res: Response) => {
   }
 };
 
-export const getPerfilUsuario = async (req: Request, res: Response) => {
+exports.getPerfilUsuario = async (req, res) => {
   try {
     const { id } = req.params;
 
     // Buscar o usuário primeiro para verificar o tipoPerfil
-    const usuarioBasico: any = await db.Usuario.findByPk(id, {
+    const usuarioBasico = await db.Usuario.findByPk(id, {
       attributes: { exclude: ["senha"] },
     });
 
@@ -241,7 +230,7 @@ export const getPerfilUsuario = async (req: Request, res: Response) => {
     }
 
     // Buscar novamente com os includes apropriados
-    const usuario: any = await db.Usuario.findByPk(id, {
+    const usuario = await db.Usuario.findByPk(id, {
       attributes: { exclude: ["senha"] },
       include: includes,
     });

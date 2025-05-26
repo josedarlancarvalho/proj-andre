@@ -3,14 +3,16 @@ FROM node:20-alpine as builder
 
 WORKDIR /app
 
-# Copiar arquivos de dependências
-COPY package*.json ./
+# Copiar apenas package.json para instalar dependências
+COPY package.json ./
 
+# Remover package-lock.json e node_modules para forçar reinstalação limpa
+RUN rm -f package-lock.json && rm -rf node_modules
 
-# Instalar dependências
+# Instalar dependências (gerará um novo package-lock.json compatível com Alpine)
 RUN npm install
 
-# Copiar o resto do código
+# Copiar o restante do código, incluindo o novo package-lock.json gerado
 COPY . .
 
 # Build da aplicação

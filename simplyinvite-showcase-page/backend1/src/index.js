@@ -5,6 +5,7 @@ const sequelize = require("./config/database");
 const jovemRoutes = require("./routes/jovemRoutes");
 const rhRoutes = require("./routes/rhRoutes");
 const gestorRoutes = require("./routes/gestorRoutes");
+const authRoutes = require("./routes/authRoutes");
 const models = require("./models");
 
 // Carregar variáveis de ambiente
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/jovem", jovemRoutes);
 app.use("/api/rh", rhRoutes);
 app.use("/api/gestor", gestorRoutes);
+app.use("/auth", authRoutes);
 
 // Rota simples para teste
 app.get("/", (req, res) => {

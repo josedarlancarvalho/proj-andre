@@ -23,8 +23,8 @@ export async function registrar(usuario: Usuario): Promise<UsuarioLoginResponseD
   return response.data;
 }
 
-export async function login(email: string, senha: string): Promise<UsuarioLoginResponseDTO> {
-  const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post("/auth/login", { email, senha });
+export async function login(email: string, senha: string, tipoPerfil: "jovem" | "rh" | "gestor"): Promise<UsuarioLoginResponseDTO> {
+  const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post("/auth/login", { email, senha, tipoPerfil });
   return response.data;
 }
 

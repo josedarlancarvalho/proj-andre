@@ -95,7 +95,7 @@ const AuthForm = ({ userType, isOpen, onClose, onSubmit }: AuthFormProps) => {
   const handleSubmit = async (data: any) => {
     try {
       if (isLogin) {
-        const result = await signIn(data.email, data.password);
+        const result = await signIn(data.email, data.password, userType);
         if (!result.error) {
           if (onSubmit) onSubmit(data);
         }

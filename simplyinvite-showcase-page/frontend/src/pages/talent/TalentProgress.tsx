@@ -1,4 +1,3 @@
-
 import React from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Clock, Eye, Calendar, Medal } from "lucide-react";
 
 const TalentProgress = () => {
   return (
-    <UserPanelLayout userName="Ana Silva" userType="talent">
+    <UserPanelLayout userType="jovem">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Minha Evolução</h1>

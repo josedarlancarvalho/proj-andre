@@ -11,10 +11,10 @@ COPY package*.json ./
 # Instalar dependências
 RUN npm install
 
-# Copiar código-fonte e wait-for-it.sh
-COPY . .
+# Copiar wait-for-it.sh e código-fonte
 COPY wait-for-it.sh ./
 RUN chmod +x wait-for-it.sh
+COPY . .
 
 # Expor a porta da aplicação
 EXPOSE 8080

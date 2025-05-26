@@ -109,7 +109,7 @@ const ManagerCompany = () => {
   };
 
   return (
-    <UserPanelLayout userName={userName} userType="manager">
+    <UserPanelLayout userType="gestor">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Minha Empresa</h1>

@@ -1,25 +1,17 @@
-import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { RequestHandler } from '../types/controller';
-import db from '../models';
+const jwt = require('jsonwebtoken');
+const db = require('../models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-interface LoginRequest {
-  email: string;
-  senha: string;
-  tipoPerfil: 'jovem' | 'rh' | 'gestor';
-}
-
-export const login: RequestHandler = async (req, res) => {
+exports.login = async (req, res) => {
   try {
-    const { email, senha, tipoPerfil } = req.body as LoginRequest;
+    const { email, senha, tipoPerfil } = req.body;
 
     if (!email || !senha) {
       return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
 
-    const usuario = await db.Usuario.findOne({
+    const usuario = await db.Usuario.scope(null).findOne({
       where: { 
         email,
         tipoPerfil
@@ -53,7 +45,8 @@ export const login: RequestHandler = async (req, res) => {
         nomeCompleto: usuario.nomeCompleto,
         tipoPerfil: usuario.tipoPerfil,
         onboardingCompleto: usuario.onboardingCompleto
-      }
+      },
+      tipoPerfil: usuario.tipoPerfil
     });
   } catch (error) {
     console.error('Erro no login:', error);
@@ -61,7 +54,7 @@ export const login: RequestHandler = async (req, res) => {
   }
 };
 
-export const verificarToken: RequestHandler = async (req, res) => {
+exports.verificarToken = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     
@@ -69,7 +62,7 @@ export const verificarToken: RequestHandler = async (req, res) => {
       return res.status(401).json({ message: 'Token não fornecido' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number };
+    const decoded = jwt.verify(token, JWT_SECRET);
     const usuario = await db.Usuario.findByPk(decoded.id);
 
     if (!usuario) {
@@ -90,7 +83,7 @@ export const verificarToken: RequestHandler = async (req, res) => {
   }
 };
 
-export const getMeuPerfil: RequestHandler = async (req, res) => {
+exports.getMeuPerfil = async (req, res) => {
   try {
     if (!req.usuario) {
       return res.status(401).json({ 

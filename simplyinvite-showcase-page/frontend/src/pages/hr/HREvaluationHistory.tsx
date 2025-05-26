@@ -64,7 +64,7 @@ const HREvaluationHistory = () => {
   };
 
   return (
-    <UserPanelLayout userName={userName} userType="hr">
+    <UserPanelLayout userType="rh">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Histórico de Avaliações</h1>
