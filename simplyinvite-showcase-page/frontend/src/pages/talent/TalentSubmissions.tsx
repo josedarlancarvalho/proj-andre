@@ -6,6 +6,9 @@ import { FileText, Video, Plus, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/panels/ProjectCard";
 import VideoPlayer from "@/components/panels/VideoPlayer";
+import { useAuth } from "@/contexts/AuthContext";
+import { buscarMeusProjetos } from "@/servicos/jovem";
+import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -24,44 +27,53 @@ interface VideoSubmissionDetails {
 }
 
 const TalentSubmissions = () => {
+  const { user, profileType } = useAuth(); // Usando o contexto de autenticação
+  const componentUserType = profileType
+    ? mapAuthToComponentType(profileType)
+    : "talent";
   // State for dynamic data
   const [projects, setProjects] = useState<SubmissionProject[]>([]);
   const [videoDetails, setVideoDetails] = useState<VideoSubmissionDetails>({
     title: "Seu Vídeo de Apresentação",
     videoUrl: "", // Initialize with empty or placeholder URL
   });
-  const [userName, setUserName] = useState("Carregando..."); // State for user name
 
   // useEffect to fetch data
   useEffect(() => {
     const fetchSubmissionsData = async () => {
-      // const userResponse = await fetch("/api/talent/user-info");
-      // const userData = await userResponse.json();
-      // setUserName(userData.name);
-      // setUserName("Ana Silva"); // Example // REMOVE THIS LINE
+      try {
+        // Buscar projetos do usuário
+        const projetosData = await buscarMeusProjetos();
+        console.log("Projetos carregados:", projetosData);
 
-      // const submissionsResponse = await fetch("/api/talent/submissions");
+        if (projetosData && projetosData.length > 0) {
+          // Mapear projetos para o formato esperado
+          const projetosMapeados = projetosData.map((projeto) => ({
+            id: projeto.id.toString(),
+            title: projeto.titulo,
+            image:
+              "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // Imagem temporária
+            medalType: projeto.avaliacao?.medalha || null,
+            hasFeedback: projeto.feedback ? true : false,
+            status: projeto.status,
+            date: new Date(
+              projeto.createdAt || Date.now()
+            ).toLocaleDateString(),
+          }));
+          setProjects(projetosMapeados);
+        }
 
-      const fetchProjects = async () => {
-        // const response = await fetch("/api/talent/submissions/projects");
-        // const data = await response.json();
-        // setProjects(data);
-        setProjects([]); // Initialize with empty array or fetched data
-      };
-
-      const fetchVideoDetails = async () => {
-        // const response = await fetch("/api/talent/submissions/video");
-        // const data = await response.json();
-        // setVideoDetails(data);
-        setVideoDetails({ title: "Seu Vídeo de Apresentação", videoUrl: "" }); // Placeholder
-      };
-      
-      fetchProjects();
-      fetchVideoDetails();
+        // Buscar informações do vídeo (quando disponível)
+        // Por enquanto, deixamos o placeholder
+      } catch (error) {
+        console.error("Erro ao carregar dados de submissões:", error);
+      }
     };
 
-    fetchSubmissionsData();
-  }, []);
+    if (user) {
+      fetchSubmissionsData();
+    }
+  }, [user]);
 
   const handleViewDetails = (id: string) => {
     console.log("View details", id);
@@ -80,7 +92,7 @@ const TalentSubmissions = () => {
   };
 
   return (
-    <UserPanelLayout userName={userName} userType="talent">
+    <UserPanelLayout userType="jovem">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Meus Envios</h1>
@@ -125,11 +137,14 @@ const TalentSubmissions = () => {
                     hasFeedback={project.hasFeedback}
                     onViewDetails={() => handleViewDetails(project.id)}
                     onViewFeedback={() => handleViewFeedback(project.id)}
-                    userType="talent"
+                    userType={componentUserType}
                   />
                 ))
               ) : (
-                <p>Nenhum projeto enviado ainda. Clique em "Enviar Novo Projeto" para começar.</p>
+                <p>
+                  Nenhum projeto enviado ainda. Clique em "Enviar Novo Projeto"
+                  para começar.
+                </p>
               )}
             </div>
           </CardContent>
@@ -143,7 +158,9 @@ const TalentSubmissions = () => {
             <div className="flex flex-col space-y-4 items-center justify-center p-8 border-2 border-dashed rounded-lg">
               <FileText size={48} className="text-muted-foreground" />
               <div className="text-center">
-                <h3 className="text-lg font-medium">Arraste seu projeto ou clique para enviar</h3>
+                <h3 className="text-lg font-medium">
+                  Arraste seu projeto ou clique para enviar
+                </h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Suporta arquivos PDF, PPT, DOC ou ZIP (máximo 20MB)
                 </p>

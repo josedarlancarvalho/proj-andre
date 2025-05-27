@@ -9,6 +9,9 @@ import FeedbackList from "@/components/panels/FeedbackList";
 import StatCard from "@/components/panels/StatCard";
 import { Plus, FileVideo, Medal, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
+import { getMeuPerfil } from "@/servicos/usuario"; // Importar o serviço para obter dados do perfil
+import { buscarMeusProjetos, buscarFeedbacks } from "@/servicos/jovem"; // Importar serviços do jovem
 
 // Interfaces
 interface Project {
@@ -46,6 +49,7 @@ interface VideoDetails {
 }
 
 const TalentPanel = () => {
+  const { user } = useAuth(); // Usar o hook de autenticação para obter o usuário logado
   const [projects, setProjects] = useState<Project[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -56,7 +60,10 @@ const TalentPanel = () => {
   const [userProfile, setUserProfile] = useState<{
     name: string;
     tags: string[];
-  }>({ name: "Carregando...", tags: [] });
+  }>({
+    name: "",
+    tags: [],
+  });
   const [videoDetails, setVideoDetails] = useState<VideoDetails>({
     title: "Seu Vídeo de Apresentação",
     videoUrl: "",
@@ -66,86 +73,91 @@ const TalentPanel = () => {
   const [isRecording, setIsRecording] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Atualizar o userProfile imediatamente quando o user do contexto mudar
   useEffect(() => {
-    // Simular API para carregar dados do usuário, projetos, feedbacks e convites
-    const fetchData = async () => {
-      // EXEMPLO: Dados carregados de uma API real (descomente e ajuste sua URL)
-      /*
-      const profileResponse = await fetch("/api/talent/profile");
-      const profileData = await profileResponse.json();
-      setUserProfile({ name: profileData.name, tags: profileData.tags });
-      setProfileStats({ projectsSent: profileData.projectsSent, feedbacksReceived: profileData.feedbacksReceived });
-
-      const projectsResponse = await fetch("/api/talent/projects");
-      const projectsData = await projectsResponse.json();
-      setProjects(projectsData);
-
-      const feedbacksResponse = await fetch("/api/talent/feedbacks");
-      const feedbacksData = await feedbacksResponse.json();
-      setFeedbacks(feedbacksData);
-
-      const invitesResponse = await fetch("/api/talent/invites");
-      const invitesData = await invitesResponse.json();
-      setInvites(invitesData);
-
-      const videoResponse = await fetch("/api/talent/video");
-      const videoData = await videoResponse.json();
-      setVideoDetails(videoData);
-      */
-
-      // Simulação local enquanto API não está pronta
+    if (user) {
+      console.log("TalentPanel - Usuário autenticado:", user);
+      // Forçar a atualização do perfil com os dados do usuário autenticado
       setUserProfile({
-        name: "João Silva",
-        tags: ["React", "TypeScript", "UI/UX"],
+        name: user.nomeCompleto || "Usuário",
+        tags: user.areasInteresse || [],
       });
-      setProfileStats({ projectsSent: 3, feedbacksReceived: 5 });
-      setProjects([
-        {
-          id: "1",
-          title: "App Educacional",
-          image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-          medalType: "prata",
-          hasFeedback: true,
-        },
-        {
-          id: "2",
-          title: "Projeto Social",
-          image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
-          medalType: null,
-          hasFeedback: false,
-        },
-      ]);
-      setFeedbacks([
-        {
-          id: "1",
-          from: "Maria Silva (RH)",
-          date: "12/05/2023",
-          text: "Interface intuitiva!",
-          category: "UX Design",
-          isNew: true,
-        },
-        {
-          id: "2",
-          from: "Carlos Mendes (RH)",
-          date: "05/04/2023",
-          text: "Bom backend, adicione testes.",
-          category: "Desenvolvimento",
-          isNew: false,
-        },
-      ]);
-      setInvites([
-        {
-          id: "1",
-          company: "Tech Solutions",
-          date: "15/05/2023 às 14:30",
-          type: "Entrevista Online",
-        },
-      ]);
-      setVideoDetails({ title: "Seu Vídeo de Apresentação", videoUrl: "" }); // vídeo vazio no começo
+
+      // Log para depuração
+      console.log("TalentPanel - userProfile atualizado:", {
+        name: user.nomeCompleto || "Usuário",
+        tags: user.areasInteresse || [],
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Carregar dados reais do usuário
+    const fetchData = async () => {
+      try {
+        console.log("Iniciando carregamento de dados para o painel");
+
+        // Usar diretamente os dados do usuário autenticado para o nome e tags básicas
+        // para evitar inconsistências se a API retornar dados diferentes
+
+        // Obter projetos do usuário
+        try {
+          const projetosData = await buscarMeusProjetos();
+          console.log("Projetos carregados:", projetosData);
+
+          // Mapear projetos para o formato esperado
+          const projetosMapeados = projetosData.map((projeto) => ({
+            id: projeto.id.toString(),
+            title: projeto.titulo,
+            image:
+              "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // Imagem temporária
+            medalType: projeto.avaliacao?.medalha || null,
+            hasFeedback: projeto.feedback ? true : false,
+          }));
+          setProjects(projetosMapeados);
+
+          // Atualizar estatísticas parcialmente
+          setProfileStats((prev) => ({
+            ...prev,
+            projectsSent: projetosData.length,
+          }));
+        } catch (projetosError) {
+          console.error("Erro ao carregar projetos:", projetosError);
+        }
+
+        // Obter feedbacks - em uma chamada separada para não bloquear tudo se uma falhar
+        try {
+          const feedbacksData = await buscarFeedbacks();
+          console.log("Feedbacks carregados:", feedbacksData);
+
+          // Mapear feedbacks para o formato esperado
+          const feedbacksMapeados = feedbacksData.map((feedback) => ({
+            id: feedback.id.toString(),
+            from: feedback.gestor?.nomeCompleto || "Avaliador",
+            date: new Date(feedback.createdAt).toLocaleDateString(),
+            text: feedback.comentario,
+            category: "Feedback",
+            isNew: false,
+          }));
+          setFeedbacks(feedbacksMapeados);
+
+          // Atualizar estatísticas parcialmente
+          setProfileStats((prev) => ({
+            ...prev,
+            feedbacksReceived: feedbacksData.length,
+          }));
+        } catch (feedbacksError) {
+          console.error("Erro ao carregar feedbacks:", feedbacksError);
+        }
+      } catch (error) {
+        console.error("Erro geral ao carregar dados do usuário:", error);
+      }
     };
 
-    fetchData();
-  }, []);
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   // NOVO: Ativar webcam e mostrar no vídeo
   const handleRecordVideo = async () => {
@@ -180,10 +192,10 @@ const TalentPanel = () => {
   return (
     <UserPanelLayout userType="jovem">
       <div className="space-y-6">
-        {/* Saudação personalizada (já pega o nome real do estado) */}
+        {/* Saudação personalizada - Usar diretamente o nome do usuário do contexto de autenticação */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">
-            Bem-vindo(a), {userProfile.name}!
+            Bem-vindo(a), {user?.nomeCompleto || ""}!
           </h1>
           <Link to="/jovem/submissoes">
             <Button onClick={() => console.log("New project")}>
@@ -193,9 +205,9 @@ const TalentPanel = () => {
           </Link>
         </div>
 
-        {/* Resumo do perfil dinâmico */}
+        {/* Resumo do perfil dinâmico - Usar diretamente o usuário do contexto */}
         <ProfileSummary
-          name={userProfile.name}
+          name=""
           stats={[
             { label: "Projetos enviados", value: profileStats.projectsSent },
             {
@@ -203,7 +215,8 @@ const TalentPanel = () => {
               value: profileStats.feedbacksReceived,
             },
           ]}
-          tags={userProfile.tags}
+          tags={user?.areasInteresse || []}
+          useContextName={true}
         />
 
         {/* Estatísticas */}

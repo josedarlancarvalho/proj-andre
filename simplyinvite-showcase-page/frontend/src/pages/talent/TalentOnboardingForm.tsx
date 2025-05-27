@@ -24,6 +24,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { completarOnboarding, atualizarPerfil } from "@/servicos/jovem";
+import { getMeuPerfil } from "@/servicos/usuario";
 
 type OnboardingFormData = {
   fullName: string;
@@ -70,17 +72,17 @@ type OnboardingFormData = {
 
 const TalentOnboardingForm = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const form = useForm<OnboardingFormData>({
     defaultValues: {
-      fullName: "",
+      fullName: user?.nomeCompleto || "",
       age: "",
-      gender: "",
-      cityState: "",
+      gender: user?.gender || "",
+      cityState: user?.cidade || "",
       educationStatus: [],
       hasExperience: "no",
-      highlightDescription: "",
-      specialBadge: "",
+      highlightDescription: user?.bio || "",
+      specialBadge: user?.specialBadge || "",
       authorization: false,
     },
   });
@@ -93,11 +95,64 @@ const TalentOnboardingForm = () => {
     try {
       console.log("Form data submitted:", data);
 
-      // Em uma implementação real, você enviaria esses dados para o backend
-      // await api.post('/jovem/onboarding', formData);
+      // Preparar os dados para enviar ao servidor
+      const dadosOnboarding = {
+        // Dados pessoais
+        nomeCompleto: data.fullName,
+        cidade: data.cityState,
+        gender: data.gender,
+        genderOther: data.genderOther,
 
-      // Simulando um delay para feedback visual
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Formação
+        formacaoCurso: data.educationStatus.includes("college_current")
+          ? data.collegeCourse
+          : data.educationStatus.includes("college_graduated")
+          ? data.collegeGraduatedCourse
+          : "",
+        formacaoInstituicao: data.educationStatus.includes("college_current")
+          ? data.collegeName
+          : data.educationStatus.includes("college_graduated")
+          ? data.collegeGraduatedName
+          : "",
+        formacaoPeriodo: data.educationStatus.includes("college_current")
+          ? data.collegePeriod
+          : data.educationStatus.includes("college_graduated")
+          ? data.collegeGraduationYear
+          : "",
+        collegeModality: data.collegeModality,
+        collegeType: data.collegeType,
+
+        // Experiência
+        experienceDescription:
+          data.hasExperience === "yes" ? data.experienceDescription : "",
+
+        // Badge especial
+        specialBadge: data.specialBadge,
+
+        // Destaque
+        bio: data.highlightDescription,
+      };
+
+      // Enviar os dados formatados de acordo com a API
+      await completarOnboarding({
+        experiences:
+          data.hasExperience === "yes" ? data.experienceDescription : "",
+        portfolioLinks: "", // Não temos campo específico para isso no formulário
+        educationalBackground: `${dadosOnboarding.formacaoCurso} - ${dadosOnboarding.formacaoInstituicao} (${dadosOnboarding.formacaoPeriodo})`,
+      });
+
+      // Atualizar o perfil com dados mais completos usando a API de atualizar perfil
+      await atualizarPerfil(dadosOnboarding);
+
+      // Atualizar os dados do usuário no contexto de autenticação
+      const updatedUserData = await getMeuPerfil();
+      if (updatedUserData && updatedUserData.usuario) {
+        console.log(
+          "Dados atualizados do usuário após onboarding:",
+          updatedUserData.usuario
+        );
+        setUser(updatedUserData.usuario);
+      }
 
       toast.success("Perfil atualizado com sucesso!");
       navigate("/jovem");

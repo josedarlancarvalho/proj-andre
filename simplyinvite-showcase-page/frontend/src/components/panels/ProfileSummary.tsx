@@ -1,8 +1,8 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProfileSummaryProps {
   name: string;
@@ -12,13 +12,37 @@ interface ProfileSummaryProps {
     value: string | number;
   }[];
   tags?: string[];
+  useContextName?: boolean;
 }
 
-const ProfileSummary = ({ name, image, stats, tags }: ProfileSummaryProps) => {
+const ProfileSummary = ({
+  name,
+  image,
+  stats,
+  tags,
+  useContextName = true,
+}: ProfileSummaryProps) => {
+  const { user } = useAuth();
+
+  // Sempre dar prioridade para o nome do usuário do contexto de autenticação
+  // Isso resolve o problema de mostrar "João Silva" quando o usuário logado é outro
+  const displayName = user?.nomeCompleto || name;
+
+  // Log para depuração
+  useEffect(() => {
+    console.log("ProfileSummary - Nome recebido via props:", name);
+    console.log(
+      "ProfileSummary - Nome do usuário no contexto:",
+      user?.nomeCompleto
+    );
+    console.log("ProfileSummary - Nome que será exibido:", displayName);
+  }, [name, user, displayName]);
+
   const getInitials = (name: string) => {
+    if (!name) return "";
     return name
       .split(" ")
-      .map(n => n[0])
+      .map((n) => n[0])
       .join("")
       .toUpperCase();
   };
@@ -31,12 +55,12 @@ const ProfileSummary = ({ name, image, stats, tags }: ProfileSummaryProps) => {
       <CardContent>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={image} alt={name} />
-            <AvatarFallback>{getInitials(name)}</AvatarFallback>
+            <AvatarImage src={image || user?.avatarUrl} alt={displayName} />
+            <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
           </Avatar>
-          
+
           <div className="space-y-1 text-center sm:text-left">
-            <h3 className="font-semibold text-lg">{name}</h3>
+            <h3 className="font-semibold text-lg">{displayName}</h3>
             <div className="flex flex-wrap gap-1">
               {stats.map((stat, index) => (
                 <div key={index} className="text-sm">
@@ -46,11 +70,13 @@ const ProfileSummary = ({ name, image, stats, tags }: ProfileSummaryProps) => {
                 </div>
               ))}
             </div>
-            
+
             {tags && tags.length > 0 && (
               <div className="flex flex-wrap gap-1 pt-2">
                 {tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary">{tag}</Badge>
+                  <Badge key={index} variant="secondary">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             )}

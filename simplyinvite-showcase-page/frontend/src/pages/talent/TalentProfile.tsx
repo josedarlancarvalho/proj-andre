@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getMeuPerfil } from "@/servicos/usuario";
 import { atualizarPerfil } from "@/servicos/jovem";
 import { FormItem } from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define interface for profile data
 interface TalentProfileData {
@@ -37,6 +38,7 @@ const TalentProfile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { setUser } = useAuth();
 
   // Initialize with default/empty values
   const [profile, setProfile] = useState<TalentProfileData>({
@@ -67,6 +69,18 @@ const TalentProfile = () => {
 
         // Mapeando os dados do onboarding para os campos do perfil
         const usuario = data.usuario;
+
+        if (!usuario) {
+          console.error("Dados do usuário não encontrados");
+          toast({
+            title: "Erro",
+            description: "Não foi possível carregar os dados do usuário.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log("Dados do usuário para o perfil:", usuario);
 
         // Mapeamento para formação acadêmica
         let formacaoCurso = "";
@@ -103,7 +117,8 @@ const TalentProfile = () => {
         const specialBadge =
           usuario.recognitionBadge || usuario.specialBadge || "";
 
-        setProfile({
+        // Objeto de perfil atualizado
+        const updatedProfile = {
           name: usuario.nomeCompleto || "",
           city: usuario.cidade || "",
           interests: usuario.areasInteresse || [],
@@ -120,7 +135,10 @@ const TalentProfile = () => {
           specialBadge: specialBadge,
           portfolioUrl: portfolioUrl,
           isLoading: false,
-        });
+        };
+
+        console.log("Perfil processado:", updatedProfile);
+        setProfile(updatedProfile);
       } catch (error) {
         console.error("Erro ao carregar perfil:", error);
         toast({
@@ -166,6 +184,14 @@ const TalentProfile = () => {
 
       console.log("Resposta da API:", JSON.stringify(result, null, 2));
       setIsEditing(false);
+
+      // Atualizar os dados do usuário no contexto de autenticação para refletir as mudanças em todo o aplicativo
+      const updatedUserData = await getMeuPerfil();
+      if (updatedUserData && updatedUserData.usuario) {
+        console.log("Dados atualizados do usuário:", updatedUserData.usuario);
+        setUser(updatedUserData.usuario);
+      }
+
       toast({
         title: "Sucesso",
         description: "Perfil atualizado com sucesso!",
