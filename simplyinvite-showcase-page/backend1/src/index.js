@@ -23,21 +23,47 @@ app.use(express.json());
 app.use("/api/jovem", jovemRoutes);
 app.use("/api/rh", rhRoutes);
 app.use("/api/gestor", gestorRoutes);
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Rota simples para teste
 app.get("/", (req, res) => {
   res.json({ message: "Bem-vindo ao servidor!" });
 });
 
-// Sincronizar banco de dados e iniciar servidor
-sequelize
-  .sync()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Servidor rodando na porta ${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Erro ao sincronizar banco de dados:", error);
-  });
+// Função para tentar conectar ao banco de dados
+const connectWithRetry = async () => {
+  let retries = 5;
+  while (retries) {
+    try {
+      await sequelize.authenticate();
+      console.log("Conexão com o banco de dados estabelecida com sucesso.");
+
+      // Sincronizar banco de dados
+      await sequelize.sync();
+
+      // Iniciar servidor
+      app.listen(port, () => {
+        console.log(`Servidor rodando na porta ${port}`);
+      });
+
+      return;
+    } catch (error) {
+      retries -= 1;
+      console.log(`Tentativas restantes: ${retries}`);
+      console.error("Erro ao conectar ao banco de dados:", error);
+
+      if (retries === 0) {
+        console.error(
+          "Não foi possível conectar ao banco de dados após várias tentativas"
+        );
+        process.exit(1);
+      }
+
+      // Aguardar 5 segundos antes de tentar novamente
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+};
+
+// Iniciar a aplicação
+connectWithRetry();

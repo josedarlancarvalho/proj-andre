@@ -40,17 +40,9 @@ interface UserPanelLayoutProps {
   userType: ProfileType;
 }
 
-const UserPanelLayout = ({
-  children,
-  userType,
-}: UserPanelLayoutProps) => {
+const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
   const location = useLocation();
-  const { 
-    user,
-    profileType,
-    signOut, 
-    loading: authLoading
-  } = useAuth();
+  const { user, profileType, signOut, loading: authLoading } = useAuth();
 
   const currentUserName = user?.nomeCompleto || "Usuário";
   const currentUserImage = user?.avatarUrl;
