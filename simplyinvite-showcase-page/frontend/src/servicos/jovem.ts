@@ -36,7 +36,7 @@ interface ProjetoComAvaliacao extends Projeto {
     id: number;
     nota: number;
     comentario: string;
-    medalha?: 'ouro' | 'prata' | 'bronze';
+    medalha?: "ouro" | "prata" | "bronze";
     avaliador: {
       id: number;
       nomeCompleto: string;
@@ -46,7 +46,7 @@ interface ProjetoComAvaliacao extends Projeto {
     id: number;
     comentario: string;
     oportunidade?: {
-      tipo: 'estagio' | 'trainee' | 'junior';
+      tipo: "estagio" | "trainee" | "junior";
       descricao: string;
     };
     gestor: {
@@ -83,7 +83,9 @@ export async function buscarConvites() {
 
 // Responder a um convite
 export async function responderConvite(conviteId: string, aceito: boolean) {
-  const response = await api.post(`/convites/${conviteId}/responder`, { aceito });
+  const response = await api.post(`/convites/${conviteId}/responder`, {
+    aceito,
+  });
   return response.data;
 }
 
@@ -96,8 +98,18 @@ export async function atualizarPerfil(dados: {
   bio?: string;
   linkedinUrl?: string;
   githubUrl?: string;
+  portfolioLinks?: string;
   areasInteresse?: string[];
   habilidadesPrincipais?: string[];
+  formacaoCurso?: string;
+  formacaoInstituicao?: string;
+  formacaoPeriodo?: string;
+  gender?: string;
+  genderOther?: string;
+  collegeModality?: string;
+  collegeType?: string;
+  experienceDescription?: string;
+  specialBadge?: string;
 }) {
   const response = await api.put("/jovem/perfil", dados);
   return response.data;
@@ -116,12 +128,17 @@ export async function completarOnboarding(dados: {
 // Serviço Jovem
 const jovemService = {
   // Projetos
-  criarProjeto: async (projeto: Omit<Projeto, 'id' | 'status' | 'usuarioId'>): Promise<Projeto> => {
-    const response = await api.post('/jovem/projetos', projeto);
+  criarProjeto: async (
+    projeto: Omit<Projeto, "id" | "status" | "usuarioId">
+  ): Promise<Projeto> => {
+    const response = await api.post("/jovem/projetos", projeto);
     return response.data;
   },
 
-  atualizarProjeto: async (id: number, projeto: Partial<Omit<Projeto, 'id' | 'status' | 'usuarioId'>>): Promise<Projeto> => {
+  atualizarProjeto: async (
+    id: number,
+    projeto: Partial<Omit<Projeto, "id" | "status" | "usuarioId">>
+  ): Promise<Projeto> => {
     const response = await api.put(`/jovem/projetos/${id}`, projeto);
     return response.data;
   },
@@ -131,7 +148,7 @@ const jovemService = {
   },
 
   buscarMeusProjetos: async (): Promise<ProjetoComAvaliacao[]> => {
-    const response = await api.get('/jovem/projetos');
+    const response = await api.get("/jovem/projetos");
     return response.data;
   },
 
@@ -142,19 +159,19 @@ const jovemService = {
 
   // Perfil e Estatísticas
   buscarPerfil: async () => {
-    const response = await api.get('/jovem/perfil');
+    const response = await api.get("/jovem/perfil");
     return response.data;
   },
 
   atualizarPerfil: async (dados: any) => {
-    const response = await api.put('/jovem/perfil', dados);
+    const response = await api.put("/jovem/perfil", dados);
     return response.data;
   },
 
   buscarEstatisticas: async () => {
-    const response = await api.get('/jovem/estatisticas');
+    const response = await api.get("/jovem/estatisticas");
     return response.data;
-  }
+  },
 };
 
-export default jovemService; 
+export default jovemService;

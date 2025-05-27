@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { completarOnboarding } from "@/servicos/jovem";
+import { useNavigate } from "react-router-dom";
 
 // Tipos para melhor tipagem
 type EducationalBackground = "estudante" | "conclui" | "fora_escola";
@@ -50,17 +52,29 @@ interface FormData {
   recognitionBadge: RecognitionBadge;
 }
 
-// Placeholder para um componente que salva os dados no backend
-// TODO: Implementar a função real para salvar os dados do onboarding
+// Implementação real da função para salvar os dados do onboarding
 const saveOnboardingData = async (userId: string, data: any) => {
-  console.log(
-    "Simulando salvamento de dados de onboarding para usuário",
-    userId,
-    data
-  );
-  // Aqui você faria a chamada API para o backend
-  // await fetch(`/api/users/${userId}/onboarding`, { method: 'POST', body: JSON.stringify(data) });
-  return { success: true }; // Simula sucesso
+  console.log("Salvando dados de onboarding para usuário", userId, data);
+
+  try {
+    // Chamada real para a API
+    const result = await completarOnboarding({
+      experiences: data.experiences,
+      portfolioLinks: data.portfolioLinks,
+      educationalBackground: data.educationalBackground,
+      institutionName: data.institutionName,
+      studyDetails: data.studyDetails,
+      talentSource: data.talentSource,
+      humanizedCategory: data.humanizedCategory,
+      customCategory: data.customCategory,
+      recognitionBadge: data.recognitionBadge,
+    });
+
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Erro ao salvar dados de onboarding:", error);
+    return { success: false, error };
+  }
 };
 
 const OnboardingForm = () => {
@@ -92,6 +106,7 @@ const OnboardingForm = () => {
     recognitionBadge: "" as RecognitionBadge,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   if (!user) {
     return (
@@ -229,7 +244,7 @@ const OnboardingForm = () => {
     try {
       const dataToSave = {
         ...formData,
-        onboardingComplete: true,
+        onboardingCompleto: true,
         profileType:
           formData.educationalBackground === "fora_escola"
             ? "talent"
@@ -247,8 +262,14 @@ const OnboardingForm = () => {
       const result = await saveOnboardingData(user.id, dataToSave);
 
       if (result.success) {
-        setUser({ ...user, ...dataToSave });
+        setUser({ ...user, ...result.data });
         toast.success("Onboarding concluído com sucesso! Redirecionando...");
+
+        // Forçar redirecionamento após um pequeno delay para dar tempo ao toast aparecer
+        setTimeout(() => {
+          navigate("/jovem");
+          console.log("Redirecionando para /jovem após onboarding");
+        }, 1500);
       } else {
         toast.error("Erro ao salvar informações de onboarding.");
       }
@@ -728,7 +749,7 @@ const OnboardingForm = () => {
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{
         backgroundImage:
-          "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/background.jpg')",
+          "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

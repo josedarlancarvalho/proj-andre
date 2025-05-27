@@ -95,7 +95,7 @@ const TalentOnboardingForm = () => {
 
       // Em uma implementação real, você enviaria esses dados para o backend
       // await api.post('/jovem/onboarding', formData);
-      
+
       // Simulando um delay para feedback visual
       await new Promise((resolve) => setTimeout(resolve, 1000));
 

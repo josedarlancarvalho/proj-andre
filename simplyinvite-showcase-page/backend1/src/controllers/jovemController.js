@@ -194,12 +194,44 @@ exports.buscarPerfil = async (req, res) => {
 exports.atualizarPerfil = async (req, res) => {
   const { nomeCompleto, email, ...outrosDados } = req.body;
   try {
+    console.log(
+      "Atualizando perfil do usuário com dados (completo):",
+      JSON.stringify(req.body, null, 2)
+    );
+    console.log("Dados do usuário atual:", req.usuario.id);
+
     const usuarioId = req.usuario.id;
     const usuario = await db.Usuario.findByPk(usuarioId);
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
-    await usuario.update(req.body);
+
+    // Crie um objeto com os campos atualizáveis
+    const dadosParaAtualizar = {
+      ...outrosDados,
+    };
+
+    // Adicione o campo nomeCompleto se ele foi fornecido
+    if (nomeCompleto) {
+      dadosParaAtualizar.nomeCompleto = nomeCompleto;
+    }
+
+    console.log(
+      "Dados que serão atualizados:",
+      JSON.stringify(dadosParaAtualizar, null, 2)
+    );
+
+    // Tente atualizar o usuário e capture qualquer erro específico
+    try {
+      await usuario.update(dadosParaAtualizar);
+    } catch (updateError) {
+      console.error("Erro específico na atualização:", updateError.message);
+      console.error("Stack trace:", updateError.stack);
+      return res
+        .status(500)
+        .json({ message: `Erro específico: ${updateError.message}` });
+    }
+
     const usuarioAtualizado = await db.Usuario.findByPk(usuarioId, {
       attributes: { exclude: ["senha"] },
       include: [
@@ -209,9 +241,15 @@ exports.atualizarPerfil = async (req, res) => {
         },
       ],
     });
+
+    console.log("Perfil atualizado com sucesso:", usuarioAtualizado.id);
     res.json(usuarioAtualizado);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao atualizar perfil" });
+    console.error("Erro ao atualizar perfil:", error.message);
+    console.error("Stack trace:", error.stack);
+    res
+      .status(500)
+      .json({ message: "Erro ao atualizar perfil", error: error.message });
   }
 };
 
@@ -409,33 +447,48 @@ exports.completarOnboarding = async (req, res) => {
   try {
     const usuarioId = req.usuario.id;
     const {
-      nomeCompleto,
-      email,
-      linkedin,
-      github,
-      areasInteresse,
-      experiencia,
-      formacao,
+      experiences,
+      portfolioLinks,
+      educationalBackground,
+      institutionName,
+      studyDetails,
+      talentSource,
+      humanizedCategory,
+      customCategory,
+      recognitionBadge,
     } = req.body;
+
     const usuario = await db.Usuario.findByPk(usuarioId);
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
-    await usuario.update({
-      nomeCompleto,
-      email,
-      linkedin,
-      github,
-      areasInteresse,
-      experiencia,
-      formacao,
-      onboardingCompleto: true,
-    });
+
+    // Atualizar todos os campos do onboarding
+    const updateData = {};
+
+    if (experiences) updateData.experiences = experiences;
+    if (portfolioLinks) updateData.portfolioLinks = portfolioLinks;
+    if (educationalBackground)
+      updateData.educationalBackground = educationalBackground;
+    if (institutionName) updateData.institutionName = institutionName;
+    if (studyDetails) updateData.studyDetails = studyDetails;
+    if (talentSource) updateData.talentSource = talentSource;
+    if (humanizedCategory) updateData.humanizedCategory = humanizedCategory;
+    if (customCategory) updateData.customCategory = customCategory;
+    if (recognitionBadge) updateData.recognitionBadge = recognitionBadge;
+
+    // Marcar onboarding como completo
+    updateData.onboardingCompleto = true;
+
+    await usuario.update(updateData);
+
     const usuarioAtualizado = await db.Usuario.findByPk(usuarioId, {
       attributes: { exclude: ["senha"] },
     });
+
     return res.json(usuarioAtualizado);
   } catch (error) {
+    console.error("Erro ao completar onboarding:", error);
     return res.status(500).json({ message: "Erro ao completar onboarding" });
   }
 };

@@ -167,37 +167,66 @@ exports.completarOnboarding = async (req, res) => {
         .json({ message: "Não autorizado: Usuário não autenticado" });
     }
 
-    const { experiences, portfolioLinks, educationalBackground } = req.body;
+    const {
+      experiences,
+      portfolioLinks,
+      educationalBackground,
+      institutionName,
+      studyDetails,
+      talentSource,
+      humanizedCategory,
+      customCategory,
+      recognitionBadge,
+    } = req.body;
 
     const usuario = await db.Usuario.findByPk(req.usuario.id);
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
 
-    // Atualizar campos do perfil com dados do onboarding
+    // Salvar todos os campos do onboarding
     if (experiences) {
-      usuario.bio = experiences;
+      usuario.experiences = experiences;
     }
+
     if (portfolioLinks) {
-      usuario.githubUrl = portfolioLinks;
+      usuario.portfolioLinks = portfolioLinks;
     }
-    // Você poderia adicionar um novo campo para formação acadêmica
-    // ou usar outro campo existente para educational background
+
+    if (educationalBackground) {
+      usuario.educationalBackground = educationalBackground;
+    }
+
+    if (institutionName) {
+      usuario.institutionName = institutionName;
+    }
+
+    if (studyDetails) {
+      usuario.studyDetails = studyDetails;
+    }
+
+    if (talentSource) {
+      usuario.talentSource = talentSource;
+    }
+
+    if (humanizedCategory) {
+      usuario.humanizedCategory = humanizedCategory;
+    }
+
+    if (customCategory) {
+      usuario.customCategory = customCategory;
+    }
+
+    if (recognitionBadge) {
+      usuario.recognitionBadge = recognitionBadge;
+    }
 
     usuario.onboardingCompleto = true;
     await usuario.save();
 
-    // Criar objeto de resposta
-    const usuarioResponse = {
-      id: usuario.id,
-      email: usuario.email,
-      nomeCompleto: usuario.nomeCompleto,
-      tipoPerfil: usuario.tipoPerfil,
-      avatarUrl: usuario.avatarUrl,
-      onboardingCompleto: usuario.onboardingCompleto,
-    };
-
-    return res.json(usuarioResponse);
+    // Retornar o usuário atualizado (sem a senha, conforme defaultScope do modelo)
+    const usuarioAtualizado = await db.Usuario.findByPk(req.usuario.id);
+    return res.json(usuarioAtualizado);
   } catch (error) {
     console.error("Erro ao completar onboarding:", error);
     return res.status(500).json({ message: "Erro interno do servidor" });

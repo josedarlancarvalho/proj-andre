@@ -30,40 +30,16 @@ app.get("/", (req, res) => {
   res.json({ message: "Bem-vindo ao servidor!" });
 });
 
-// Função para tentar conectar ao banco de dados
-const connectWithRetry = async () => {
-  let retries = 5;
-  while (retries) {
-    try {
-      await sequelize.authenticate();
-      console.log("Conexão com o banco de dados estabelecida com sucesso.");
-
-      // Sincronizar banco de dados
-      await sequelize.sync();
-
-      // Iniciar servidor
-      app.listen(port, () => {
-        console.log(`Servidor rodando na porta ${port}`);
-      });
-
-      return;
-    } catch (error) {
-      retries -= 1;
-      console.log(`Tentativas restantes: ${retries}`);
-      console.error("Erro ao conectar ao banco de dados:", error);
-
-      if (retries === 0) {
-        console.error(
-          "Não foi possível conectar ao banco de dados após várias tentativas"
-        );
-        process.exit(1);
-      }
-
-      // Aguardar 5 segundos antes de tentar novamente
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-  }
-};
-
-// Iniciar a aplicação
-connectWithRetry();
+// Sincronizar o modelo com o banco de dados
+// Isso criará as colunas que faltam na tabela usuarios
+sequelize
+  .sync({ alter: true })
+  .then(() => {
+    console.log("Banco de dados sincronizado");
+    app.listen(port, () => {
+      console.log(`Servidor rodando na porta ${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Erro ao sincronizar banco de dados:", err);
+  });

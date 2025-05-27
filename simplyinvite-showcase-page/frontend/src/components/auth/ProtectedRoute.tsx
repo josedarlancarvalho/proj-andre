@@ -51,9 +51,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     profileType === "jovem" &&
     requiredProfileType === "jovem" &&
     user &&
-    !user.onboardingComplete;
+    !user.onboardingCompleto;
 
-  if (needsOnboarding) {
+  // Se o usuário precisa de onboarding e não está na rota de onboarding, redireciona para lá
+  if (needsOnboarding && location.pathname !== "/jovem/onboarding") {
+    console.log("Usuário precisa completar onboarding, redirecionando...");
     return <OnboardingForm />;
   }
 

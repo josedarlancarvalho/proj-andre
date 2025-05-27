@@ -27,6 +27,48 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      // Campos do onboarding
+      experiences: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      portfolioLinks: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      educationalBackground: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      institutionName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      studyDetails: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
+      talentSource: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      humanizedCategory: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      customCategory: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      recognitionBadge: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      onboardingCompleto: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
     },
     {
       tableName: "usuarios",
@@ -52,7 +94,7 @@ module.exports = (sequelize) => {
   // Adiciona o método de instância para validar senha
   Usuario.prototype.validarSenha = async function (senha) {
     if (!this.senha) {
-      throw new Error('Senha do usuário não está definida.');
+      throw new Error("Senha do usuário não está definida.");
     }
     return bcrypt.compare(senha, this.senha);
   };
