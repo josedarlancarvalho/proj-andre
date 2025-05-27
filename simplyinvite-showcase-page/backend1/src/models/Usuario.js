@@ -27,6 +27,60 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      // Campos do perfil
+      cidade: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      areasInteresse: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
+      bio: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      // Campos do perfil acadêmico
+      formacaoCurso: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      formacaoInstituicao: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      formacaoPeriodo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      // Campos relacionados ao gênero
+      gender: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      genderOther: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      // Campos da faculdade
+      collegeModality: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      collegeType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      // Campos de experiência
+      experienceDescription: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      // Badge especial
+      specialBadge: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       // Campos do onboarding
       experiences: {
         type: DataTypes.TEXT,

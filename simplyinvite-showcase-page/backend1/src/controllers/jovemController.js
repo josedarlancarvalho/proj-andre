@@ -174,18 +174,13 @@ exports.buscarPerfil = async (req, res) => {
     const usuarioId = req.usuario.id;
     const usuario = await db.Usuario.findByPk(usuarioId, {
       attributes: { exclude: ["senha"] },
-      include: [
-        {
-          model: db.Empresa,
-          as: "empresa",
-        },
-      ],
     });
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
     }
     res.json(usuario);
   } catch (error) {
+    console.error("Erro ao buscar perfil:", error);
     res.status(500).json({ message: "Erro ao buscar perfil" });
   }
 };
@@ -232,14 +227,9 @@ exports.atualizarPerfil = async (req, res) => {
         .json({ message: `Erro específico: ${updateError.message}` });
     }
 
+    // Remover a inclusão da empresa que está causando o erro
     const usuarioAtualizado = await db.Usuario.findByPk(usuarioId, {
       attributes: { exclude: ["senha"] },
-      include: [
-        {
-          model: db.Empresa,
-          as: "empresa",
-        },
-      ],
     });
 
     console.log("Perfil atualizado com sucesso:", usuarioAtualizado.id);
