@@ -7,10 +7,22 @@ import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/panels/ProjectCard";
 import VideoPlayer from "@/components/panels/VideoPlayer";
 import { useAuth } from "@/contexts/AuthContext";
-import { buscarMeusProjetos } from "@/servicos/jovem";
+import { buscarMeusProjetos, submeterProjeto } from "@/servicos/jovem";
 import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
 import VideoRecorder from "@/components/VideoRecorder";
+import FileUploader from "@/components/FileUploader";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -41,6 +53,15 @@ const TalentSubmissions = () => {
   });
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = useState(false);
+  const [newProject, setNewProject] = useState({
+    titulo: "",
+    descricao: "",
+    tecnologias: "",
+    linkRepositorio: "",
+    linkDeploy: "",
+  });
 
   // useEffect to fetch data
   useEffect(() => {
@@ -124,7 +145,98 @@ const TalentSubmissions = () => {
   };
 
   const handleUploadProject = () => {
-    console.log("Upload project");
+    setIsSubmissionDialogOpen(true);
+  };
+
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+  };
+
+  const handleProjectSubmit = async () => {
+    try {
+      if (!selectedFile) {
+        toast.error("Por favor, selecione um arquivo para enviar");
+        return;
+      }
+
+      setIsUploading(true);
+
+      // Preparar os dados para envio
+      const tecnologiasArray = newProject.tecnologias
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      // Criar FormData para enviar o arquivo
+      const formData = new FormData();
+      formData.append("arquivo", selectedFile);
+      formData.append("titulo", newProject.titulo);
+      formData.append("descricao", newProject.descricao);
+      formData.append("tecnologias", JSON.stringify(tecnologiasArray));
+
+      if (newProject.linkRepositorio) {
+        formData.append("linkRepositorio", newProject.linkRepositorio);
+      }
+
+      if (newProject.linkDeploy) {
+        formData.append("linkDeploy", newProject.linkDeploy);
+      }
+
+      // Simulando delay de upload
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Enviar projeto para a API (comentado por enquanto)
+      // await submeterProjeto({
+      //   titulo: newProject.titulo,
+      //   descricao: newProject.descricao,
+      //   tecnologias: tecnologiasArray,
+      //   linkRepositorio: newProject.linkRepositorio || undefined,
+      //   linkDeploy: newProject.linkDeploy || undefined
+      // });
+
+      toast.success("Projeto enviado com sucesso!");
+
+      // Limpar formulário e fechar diálogo
+      setSelectedFile(null);
+      setNewProject({
+        titulo: "",
+        descricao: "",
+        tecnologias: "",
+        linkRepositorio: "",
+        linkDeploy: "",
+      });
+      setIsSubmissionDialogOpen(false);
+
+      // Recarregar a lista de projetos
+      const projetosData = await buscarMeusProjetos();
+      if (projetosData && projetosData.length > 0) {
+        const projetosMapeados = projetosData.map((projeto) => ({
+          id: projeto.id.toString(),
+          title: projeto.titulo,
+          image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+          medalType: projeto.avaliacao?.medalha || null,
+          hasFeedback: projeto.feedback ? true : false,
+          status: projeto.status,
+          date: new Date(projeto.createdAt || Date.now()).toLocaleDateString(),
+        }));
+        setProjects(projetosMapeados);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar projeto:", error);
+      toast.error("Erro ao enviar projeto. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewProject((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   return (
@@ -200,21 +312,126 @@ const TalentSubmissions = () => {
             <CardTitle>Enviar Novo Projeto</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col space-y-4 items-center justify-center p-8 border-2 border-dashed rounded-lg">
-              <FileText size={48} className="text-muted-foreground" />
-              <div className="text-center">
-                <h3 className="text-lg font-medium">
-                  Arraste seu projeto ou clique para enviar
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Suporta arquivos PDF, PPT, DOC ou ZIP (máximo 20MB)
-                </p>
-              </div>
-              <Button onClick={handleUploadProject}>Selecionar Arquivo</Button>
+            <FileUploader
+              onFileSelect={handleFileSelect}
+              maxSizeMB={20}
+              allowedFileTypes={[
+                ".pdf",
+                ".ppt",
+                ".pptx",
+                ".doc",
+                ".docx",
+                ".zip",
+              ]}
+              title="Arraste seu projeto ou clique para enviar"
+              description="Suporta arquivos PDF, PPT, DOC ou ZIP"
+            />
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleUploadProject} disabled={!selectedFile}>
+                <Plus className="mr-2 h-4 w-4" />
+                Continuar Envio
+              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Diálogo para detalhes do projeto */}
+      <Dialog
+        open={isSubmissionDialogOpen}
+        onOpenChange={setIsSubmissionDialogOpen}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Projeto</DialogTitle>
+            <DialogDescription>
+              Preencha as informações sobre seu projeto para submissão
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="titulo">Título do Projeto</Label>
+              <Input
+                id="titulo"
+                name="titulo"
+                value={newProject.titulo}
+                onChange={handleInputChange}
+                placeholder="Ex: Sistema de Gerenciamento de Tarefas"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição</Label>
+              <Textarea
+                id="descricao"
+                name="descricao"
+                value={newProject.descricao}
+                onChange={handleInputChange}
+                placeholder="Descreva seu projeto, objetivos e funcionalidades..."
+                rows={5}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tecnologias">Tecnologias Utilizadas</Label>
+              <Input
+                id="tecnologias"
+                name="tecnologias"
+                value={newProject.tecnologias}
+                onChange={handleInputChange}
+                placeholder="Ex: React, Node.js, MongoDB (separados por vírgula)"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linkRepositorio">
+                Link do Repositório (opcional)
+              </Label>
+              <Input
+                id="linkRepositorio"
+                name="linkRepositorio"
+                value={newProject.linkRepositorio}
+                onChange={handleInputChange}
+                placeholder="Ex: https://github.com/seu-usuario/projeto"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linkDeploy">
+                Link de Demonstração (opcional)
+              </Label>
+              <Input
+                id="linkDeploy"
+                name="linkDeploy"
+                value={newProject.linkDeploy}
+                onChange={handleInputChange}
+                placeholder="Ex: https://seu-projeto.vercel.app"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsSubmissionDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleProjectSubmit}
+              disabled={
+                isUploading || !newProject.titulo || !newProject.descricao
+              }
+            >
+              {isUploading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Enviando...
+                </>
+              ) : (
+                "Enviar Projeto"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </UserPanelLayout>
   );
 };
