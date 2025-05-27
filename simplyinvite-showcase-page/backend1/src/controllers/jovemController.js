@@ -446,6 +446,10 @@ exports.completarOnboarding = async (req, res) => {
       humanizedCategory,
       customCategory,
       recognitionBadge,
+      gender,
+      genderOther,
+      cidade,
+      areasInteresse,
     } = req.body;
 
     const usuario = await db.Usuario.findByPk(usuarioId);
@@ -466,6 +470,12 @@ exports.completarOnboarding = async (req, res) => {
     if (humanizedCategory) updateData.humanizedCategory = humanizedCategory;
     if (customCategory) updateData.customCategory = customCategory;
     if (recognitionBadge) updateData.recognitionBadge = recognitionBadge;
+
+    // Novos campos
+    if (gender) updateData.gender = gender;
+    if (genderOther) updateData.genderOther = genderOther;
+    if (cidade) updateData.cidade = cidade;
+    if (areasInteresse) updateData.areasInteresse = areasInteresse;
 
     // Marcar onboarding como completo
     updateData.onboardingCompleto = true;

@@ -25,6 +25,7 @@ type HumanizedCategory =
   | "retomada_trajetoria"
   | "outra";
 type RecognitionBadge = "talento_raiz" | "autodidata_destaque";
+type Gender = "feminino" | "masculino" | "outro" | "prefiro_nao_dizer";
 
 interface FormData {
   educationalBackground: EducationalBackground;
@@ -50,6 +51,10 @@ interface FormData {
     mentorship: boolean;
   };
   recognitionBadge: RecognitionBadge;
+  gender: Gender;
+  genderOther: string;
+  cidade: string;
+  areasInteresse: string;
 }
 
 // Implementação real da função para salvar os dados do onboarding
@@ -68,6 +73,12 @@ const saveOnboardingData = async (userId: string, data: any) => {
       humanizedCategory: data.humanizedCategory,
       customCategory: data.customCategory,
       recognitionBadge: data.recognitionBadge,
+      gender: data.gender,
+      genderOther: data.genderOther,
+      cidade: data.cidade,
+      areasInteresse: data.areasInteresse
+        .split(",")
+        .map((item: string) => item.trim()),
     });
 
     return { success: true, data: result };
@@ -104,6 +115,10 @@ const OnboardingForm = () => {
       mentorship: false,
     },
     recognitionBadge: "" as RecognitionBadge,
+    gender: "" as Gender,
+    genderOther: "",
+    cidade: "",
+    areasInteresse: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -206,18 +221,31 @@ const OnboardingForm = () => {
             toast.error("Por favor, descreva sua categoria.");
             return false;
           }
-        } else if (
-          formData.socialProgram.participates &&
-          !formData.socialProgram.programName.trim()
-        ) {
-          toast.error("Por favor, insira o nome do programa ou ONG.");
-          return false;
         }
         break;
 
       case 5:
         if (!formData.experiences.trim()) {
-          toast.error("Por favor, conte suas principais experiências.");
+          toast.error("Por favor, compartilhe suas experiências.");
+          return false;
+        }
+        break;
+
+      case 6:
+        if (!formData.gender) {
+          toast.error("Por favor, selecione seu gênero.");
+          return false;
+        }
+        if (formData.gender === "outro" && !formData.genderOther.trim()) {
+          toast.error("Por favor, especifique seu gênero.");
+          return false;
+        }
+        if (!formData.cidade.trim()) {
+          toast.error("Por favor, informe sua cidade.");
+          return false;
+        }
+        if (!formData.areasInteresse.trim()) {
+          toast.error("Por favor, informe pelo menos uma área de interesse.");
           return false;
         }
         break;
@@ -226,15 +254,13 @@ const OnboardingForm = () => {
   };
 
   const handleNextStep = () => {
-    if (!validateStep()) return;
-
-    if (step === 7) return; // Último passo
-    setStep((prev) => prev + 1);
+    if (validateStep()) {
+      setStep(step + 1);
+    }
   };
 
   const handlePreviousStep = () => {
-    if (step === 1) return; // Primeiro passo
-    setStep((prev) => prev - 1);
+    setStep(step - 1);
   };
 
   const handleSubmit = async () => {
@@ -242,41 +268,33 @@ const OnboardingForm = () => {
 
     setIsSubmitting(true);
     try {
-      const dataToSave = {
-        ...formData,
-        onboardingCompleto: true,
-        profileType:
-          formData.educationalBackground === "fora_escola"
-            ? "talent"
-            : "student",
-        badges: formData.recognitionBadge ? [formData.recognitionBadge] : [],
-        supportPaths: Object.entries(formData.supportPaths)
-          .filter(([_, value]) => value)
-          .map(([key]) => key),
-        visibility: {
-          institutionName: formData.socialProgram.authorizeMention,
-          socialProgram: formData.socialProgram.authorizeMention,
-        },
-      };
+      if (!user || !user.id) {
+        throw new Error("Usuário não autenticado");
+      }
 
-      const result = await saveOnboardingData(user.id, dataToSave);
-
+      const result = await saveOnboardingData(user.id, formData);
       if (result.success) {
-        setUser({ ...user, ...result.data });
-        toast.success("Onboarding concluído com sucesso! Redirecionando...");
+        // Atualize o contexto do usuário para refletir que o onboarding foi completado
+        if (setUser && user) {
+          setUser({
+            ...user,
+            onboardingCompleto: true,
+          });
+        }
 
-        // Forçar redirecionamento após um pequeno delay para dar tempo ao toast aparecer
+        toast.success("Perfil criado com sucesso!");
+
+        // Aguardar um momento para o toast aparecer antes de redirecionar
         setTimeout(() => {
           navigate("/jovem");
-          console.log("Redirecionando para /jovem após onboarding");
         }, 1500);
       } else {
-        toast.error("Erro ao salvar informações de onboarding.");
+        throw new Error("Falha ao salvar dados");
       }
-    } catch (error: any) {
-      console.error("Erro ao submeter formulário de onboarding:", error);
+    } catch (error) {
+      console.error("Erro ao finalizar onboarding:", error);
       toast.error(
-        error.message || "Ocorreu um erro ao completar o onboarding."
+        "Ocorreu um erro ao salvar seu perfil. Por favor, tente novamente."
       );
     } finally {
       setIsSubmitting(false);
@@ -609,6 +627,95 @@ const OnboardingForm = () => {
         return (
           <div className="space-y-4">
             <CardTitle className="text-2xl font-bold text-center">
+              Informações Adicionais
+            </CardTitle>
+            <CardDescription className="text-center">
+              Estas informações nos ajudam a personalizar sua experiência
+            </CardDescription>
+
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Gênero</Label>
+              <RadioGroup
+                value={formData.gender}
+                onValueChange={(value) => handleInputChange("gender", value)}
+                className="space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="feminino" id="feminino" />
+                  <Label htmlFor="feminino" className="text-sm">
+                    Feminino
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="masculino" id="masculino" />
+                  <Label htmlFor="masculino" className="text-sm">
+                    Masculino
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="outro" id="outro" />
+                  <Label htmlFor="outro" className="text-sm">
+                    Outro
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value="prefiro_nao_dizer"
+                    id="prefiro_nao_dizer"
+                  />
+                  <Label htmlFor="prefiro_nao_dizer" className="text-sm">
+                    Prefiro não dizer
+                  </Label>
+                </div>
+              </RadioGroup>
+
+              {formData.gender === "outro" && (
+                <Input
+                  placeholder="Especifique seu gênero"
+                  value={formData.genderOther}
+                  onChange={(e) =>
+                    handleInputChange("genderOther", e.target.value)
+                  }
+                  className="mt-2"
+                />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cidade" className="text-base font-medium">
+                Cidade
+              </Label>
+              <Input
+                id="cidade"
+                placeholder="Em qual cidade você mora?"
+                value={formData.cidade}
+                onChange={(e) => handleInputChange("cidade", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="areasInteresse" className="text-base font-medium">
+                Áreas de Interesse
+              </Label>
+              <Input
+                id="areasInteresse"
+                placeholder="Ex: Programação, Design, Marketing (separadas por vírgula)"
+                value={formData.areasInteresse}
+                onChange={(e) =>
+                  handleInputChange("areasInteresse", e.target.value)
+                }
+              />
+              <p className="text-xs text-gray-500">
+                Separe suas áreas de interesse por vírgulas
+              </p>
+            </div>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-4">
+            <CardTitle className="text-2xl font-bold text-center">
               Trilhas de Apoio
             </CardTitle>
             <CardDescription className="text-center">
@@ -667,7 +774,7 @@ const OnboardingForm = () => {
           </div>
         );
 
-      case 7:
+      case 8:
         return (
           <div className="space-y-4">
             <CardTitle className="text-2xl font-bold text-center">
@@ -715,6 +822,18 @@ const OnboardingForm = () => {
                 )}
                 {formData.recognitionBadge && (
                   <li>Selo de Reconhecimento: {formData.recognitionBadge}</li>
+                )}
+                {formData.cidade && <li>Cidade: {formData.cidade}</li>}
+                {formData.gender && (
+                  <li>
+                    Gênero:{" "}
+                    {formData.gender === "outro"
+                      ? formData.genderOther
+                      : formData.gender}
+                  </li>
+                )}
+                {formData.areasInteresse && (
+                  <li>Áreas de Interesse: {formData.areasInteresse}</li>
                 )}
               </ul>
             </div>
@@ -765,11 +884,11 @@ const OnboardingForm = () => {
             >
               Anterior
             </Button>
-            <span className="text-sm text-gray-500">Passo {step} de 7</span>
+            <span className="text-sm text-gray-500">Passo {step} de 8</span>
             <Button
               variant="outline"
               onClick={handleNextStep}
-              disabled={step === 7}
+              disabled={step === 8}
             >
               Próximo
             </Button>
