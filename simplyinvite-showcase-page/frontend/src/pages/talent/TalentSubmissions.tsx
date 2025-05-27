@@ -9,6 +9,8 @@ import VideoPlayer from "@/components/panels/VideoPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import { buscarMeusProjetos } from "@/servicos/jovem";
 import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
+import VideoRecorder from "@/components/VideoRecorder";
+import { toast } from "sonner";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -37,6 +39,8 @@ const TalentSubmissions = () => {
     title: "Seu Vídeo de Apresentação",
     videoUrl: "", // Initialize with empty or placeholder URL
   });
+  const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // useEffect to fetch data
   useEffect(() => {
@@ -84,7 +88,39 @@ const TalentSubmissions = () => {
   };
 
   const handleUploadVideo = () => {
-    console.log("Upload video");
+    setIsRecording(true);
+  };
+
+  const handleCancelRecording = () => {
+    setIsRecording(false);
+  };
+
+  const handleSaveVideo = async (videoBlob: Blob) => {
+    try {
+      setIsUploading(true);
+
+      // Criar um FormData para enviar o vídeo
+      const formData = new FormData();
+      formData.append("video", videoBlob, "recorded-video.webm");
+
+      // Simulando um delay de upload
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Atualizar a URL do vídeo (em produção, isso viria da resposta do servidor)
+      const videoUrl = URL.createObjectURL(videoBlob);
+      setVideoDetails({
+        title: "Seu Vídeo de Apresentação",
+        videoUrl: videoUrl,
+      });
+
+      setIsRecording(false);
+      toast.success("Vídeo salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar vídeo:", error);
+      toast.error("Erro ao salvar o vídeo. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleUploadProject = () => {
@@ -103,17 +139,26 @@ const TalentSubmissions = () => {
             <CardTitle>{videoDetails.title}</CardTitle>
           </CardHeader>
           <CardContent>
-            <VideoPlayer
-              title={videoDetails.title}
-              videoUrl={videoDetails.videoUrl}
-              onRecord={handleUploadVideo}
-            />
-            <div className="mt-4 flex justify-end">
-              <Button onClick={handleUploadVideo}>
-                <Video className="mr-2 h-4 w-4" />
-                Atualizar Vídeo
-              </Button>
-            </div>
+            {isRecording ? (
+              <VideoRecorder
+                onSave={handleSaveVideo}
+                onCancel={handleCancelRecording}
+              />
+            ) : (
+              <>
+                <VideoPlayer
+                  title={videoDetails.title}
+                  videoUrl={videoDetails.videoUrl}
+                  onRecord={handleUploadVideo}
+                />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={handleUploadVideo} disabled={isUploading}>
+                    <Video className="mr-2 h-4 w-4" />
+                    {isUploading ? "Salvando..." : "Gravar Vídeo"}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

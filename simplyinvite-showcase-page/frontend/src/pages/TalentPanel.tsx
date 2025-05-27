@@ -12,6 +12,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
 import { getMeuPerfil } from "@/servicos/usuario"; // Importar o serviço para obter dados do perfil
 import { buscarMeusProjetos, buscarFeedbacks } from "@/servicos/jovem"; // Importar serviços do jovem
+import VideoRecorder from "@/components/VideoRecorder";
+import { toast } from "sonner";
 
 // Interfaces
 interface Project {
@@ -71,6 +73,7 @@ const TalentPanel = () => {
 
   // NOVO: Estado para ativar a webcam
   const [isRecording, setIsRecording] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Atualizar o userProfile imediatamente quando o user do contexto mudar
@@ -159,35 +162,47 @@ const TalentPanel = () => {
     }
   }, [user]);
 
-  // NOVO: Ativar webcam e mostrar no vídeo
-  const handleRecordVideo = async () => {
-    if (!isRecording) {
-      // Ativar webcam
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-        }
-        setIsRecording(true);
-      } catch (error) {
-        console.error("Erro ao acessar webcam:", error);
-      }
-    } else {
-      // Parar webcam
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
-        videoRef.current.srcObject = null;
-      }
-      setIsRecording(false);
-    }
+  const handleRecordVideo = () => {
+    setIsRecording(true);
   };
 
-  // Os handlers já estão ok, só reutilizar
+  const handleCancelRecording = () => {
+    setIsRecording(false);
+  };
+
+  const handleSaveVideo = async (videoBlob: Blob) => {
+    try {
+      setIsUploading(true);
+
+      // Criar um FormData para enviar o vídeo
+      const formData = new FormData();
+      formData.append("video", videoBlob, "recorded-video.webm");
+
+      // Aqui você implementaria o envio para o servidor
+      // const response = await fetch('/api/jovem/video', {
+      //   method: 'POST',
+      //   body: formData
+      // });
+
+      // Simulando um delay de upload
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Atualizar a URL do vídeo (em produção, isso viria da resposta do servidor)
+      const videoUrl = URL.createObjectURL(videoBlob);
+      setVideoDetails({
+        title: "Seu Vídeo de Apresentação",
+        videoUrl: videoUrl,
+      });
+
+      setIsRecording(false);
+      toast.success("Vídeo salvo com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar vídeo:", error);
+      toast.error("Erro ao salvar o vídeo. Tente novamente.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <UserPanelLayout userType="jovem">
@@ -294,19 +309,17 @@ const TalentPanel = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Seu Vídeo</h2>
-              <Button variant="outline" size="sm" onClick={handleRecordVideo}>
-                {isRecording ? "Parar gravação" : "Gravar vídeo"}
-              </Button>
+              {!isRecording && (
+                <Button variant="outline" size="sm" onClick={handleRecordVideo}>
+                  {isUploading ? "Salvando..." : "Gravar vídeo"}
+                </Button>
+              )}
             </div>
 
-            {/* Exibir vídeo da webcam se estiver gravando, senão o vídeo normal */}
             {isRecording ? (
-              <video
-                ref={videoRef}
-                className="w-full rounded-md border"
-                autoPlay
-                muted
-                playsInline
+              <VideoRecorder
+                onSave={handleSaveVideo}
+                onCancel={handleCancelRecording}
               />
             ) : videoDetails.videoUrl ? (
               <VideoPlayer
