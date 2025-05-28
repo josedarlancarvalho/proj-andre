@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   SidebarProvider,
@@ -34,18 +34,57 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import type { ProfileType } from "@/types/profiles";
+import { Badge } from "@/components/ui/badge";
 
 interface UserPanelLayoutProps {
   children: React.ReactNode;
   userType: ProfileType;
 }
 
+// Simulação de API para buscar o número de notificações não lidas
+const fetchUnreadNotificationsCount = async (
+  userId: string,
+  isNewUser: boolean
+): Promise<number> => {
+  // Em produção, isso seria uma chamada real à API
+  // Por enquanto, vamos retornar um valor simulado para demonstração
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Se for um novo usuário (baseado em alguma lógica, por exemplo data de criação recente)
+      // Garantimos que tenha pelo menos uma notificação (de boas-vindas)
+      if (isNewUser) {
+        resolve(1);
+      } else {
+        // Número aleatório entre 0 e 2 para simular notificações
+        const count = Math.floor(Math.random() * 3);
+        resolve(count);
+      }
+    }, 500);
+  });
+};
+
 const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
   const location = useLocation();
   const { user, profileType, signOut, loading: authLoading } = useAuth();
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const currentUserName = user?.nomeCompleto || "Usuário";
   const currentUserImage = user?.avatarUrl;
+
+  // Buscar contagem de notificações não lidas quando o usuário mudar
+  useEffect(() => {
+    if (user?.id) {
+      // Verifica se o usuário é novo (criado nos últimos 3 dias)
+      const isNewUser = user.createdAt
+        ? new Date().getTime() - new Date(user.createdAt).getTime() <
+          3 * 24 * 60 * 60 * 1000
+        : true;
+
+      fetchUnreadNotificationsCount(user.id, isNewUser)
+        .then((count) => setUnreadNotifications(count))
+        .catch((error) => console.error("Erro ao buscar notificações:", error));
+    }
+  }, [user?.id]);
 
   const getUserInitials = () => {
     return currentUserName
@@ -272,8 +311,24 @@ const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
             <div className="flex-1">
               <h1 className="text-xl font-semibold">SimplyInvite</h1>
             </div>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // Redirecionar para a página de notificações
+                window.location.href = `/${profileType}/notificacoes`;
+              }}
+              className="relative"
+            >
               <Bell className="h-5 w-5" />
+              {unreadNotifications > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] font-bold"
+                >
+                  {unreadNotifications}
+                </Badge>
+              )}
             </Button>
           </div>
           <main className="flex-1 p-4 md:p-6 lg:p-8">

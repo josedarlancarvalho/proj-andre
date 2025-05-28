@@ -1,12 +1,8 @@
-import React from 'react';
+import React from "react";
+import TalentProgress from "./TalentProgress";
 
 const MinhaEvolucaoPage = () => {
-  return (
-    <div>
-      <h1>Minha Evolução</h1>
-      <p>Conteúdo da página Minha Evolução (em desenvolvimento).</p>
-    </div>
-  );
+  return <TalentProgress />;
 };
 
-export default MinhaEvolucaoPage; 
+export default MinhaEvolucaoPage;
