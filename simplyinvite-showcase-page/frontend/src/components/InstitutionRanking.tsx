@@ -1,413 +1,350 @@
 import React, { useState, useEffect } from "react";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
-  Trophy,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
+  Building,
+  GraduationCap,
+  Users,
+  Laptop,
+  Briefcase,
+  Heart,
+  Globe,
+  Lightbulb,
+  BookOpen,
+  Handshake,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Institution {
   id: number;
   name: string;
-  type: "Pública" | "Privada";
-  hires: number;
+  type: "Pública" | "Privada" | "ONG" | "Instituto";
+  category:
+    | "Universidade"
+    | "Faculdade"
+    | "Instituto Técnico"
+    | "Organização Social"
+    | "Centro de Pesquisa";
   location: string;
-  rating: number;
-  yearlyHires?: { year: string; hires: number }[];
+  impactArea: string;
+  impactDescription: string;
+  iconType:
+    | "education"
+    | "tech"
+    | "social"
+    | "business"
+    | "health"
+    | "global"
+    | "research"
+    | "community";
 }
 
 const InstitutionRanking = () => {
-  const [activeTab, setActiveTab] = useState("table");
+  const [activeFilter, setActiveFilter] = useState("todas");
   const [institutionsList, setInstitutionsList] = useState<Institution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRankingData = async () => {
+    // Simulando uma chamada à API
+    const loadInstitutions = () => {
       setIsLoading(true);
-      // TODO: Substituir pela chamada real da API
-      // try {
-      //   const response = await fetch("/api/institution-ranking");
-      //   const data = await response.json();
-      //   setInstitutionsList(data);
-      // } catch (error) {
-      //   console.error("Failed to fetch ranking data:", error);
-      //   setInstitutionsList([]); // Garante lista vazia em caso de erro
-      // } finally {
-      //   setIsLoading(false);
-      // }
 
-      // Como a chamada real da API está comentada,
-      // inicializamos a lista como vazia e paramos o carregamento.
-      setInstitutionsList([]);
-      setIsLoading(false);
+      // Dados de exemplo para demonstração - Instituições de Recife
+      const mockInstitutions: Institution[] = [
+        {
+          id: 1,
+          name: "Universidade Federal de Pernambuco (UFPE)",
+          type: "Pública",
+          category: "Universidade",
+          location: "Recife",
+          impactArea: "Pesquisa e Inovação",
+          impactDescription:
+            "Referência em pesquisa científica e formação profissional, com mais de 40 mil alunos em diversos cursos de graduação e pós-graduação.",
+          iconType: "education",
+        },
+        {
+          id: 2,
+          name: "Universidade de Pernambuco (UPE)",
+          type: "Pública",
+          category: "Universidade",
+          location: "Recife",
+          impactArea: "Formação Profissional",
+          impactDescription:
+            "Instituição estadual com forte atuação nas áreas de saúde, educação e tecnologia, formando profissionais para o mercado regional.",
+          iconType: "education",
+        },
+        {
+          id: 3,
+          name: "Instituto Federal de Pernambuco (IFPE)",
+          type: "Pública",
+          category: "Instituto Técnico",
+          location: "Recife",
+          impactArea: "Educação Técnica",
+          impactDescription:
+            "Oferece formação técnica e tecnológica de qualidade, com foco na inserção rápida dos estudantes no mercado de trabalho.",
+          iconType: "education",
+        },
+        {
+          id: 4,
+          name: "Universidade Católica de Pernambuco (UNICAP)",
+          type: "Privada",
+          category: "Universidade",
+          location: "Recife",
+          impactArea: "Formação Humanística",
+          impactDescription:
+            "Instituição jesuíta com mais de 70 anos de tradição, formando profissionais com visão humanística e compromisso social.",
+          iconType: "education",
+        },
+        {
+          id: 5,
+          name: "FBV - Faculdade Boa Viagem",
+          type: "Privada",
+          category: "Faculdade",
+          location: "Recife",
+          impactArea: "Empreendedorismo",
+          impactDescription:
+            "Referência em cursos de gestão e negócios, com forte conexão com o mercado empresarial local e programas de aceleração de startups.",
+          iconType: "business",
+        },
+        {
+          id: 6,
+          name: "CESAR School",
+          type: "Privada",
+          category: "Faculdade",
+          location: "Recife",
+          impactArea: "Inovação Tecnológica",
+          impactDescription:
+            "Instituição educacional do Porto Digital focada na formação de profissionais para a economia criativa e digital.",
+          iconType: "tech",
+        },
+        {
+          id: 7,
+          name: "Porto Digital",
+          type: "Instituto",
+          category: "Centro de Pesquisa",
+          location: "Recife",
+          impactArea: "Ecossistema de Inovação",
+          impactDescription:
+            "Parque tecnológico que abriga mais de 300 empresas e instituições, gerando oportunidades em tecnologia e economia criativa.",
+          iconType: "tech",
+        },
+        {
+          id: 8,
+          name: "Instituto Fecomércio",
+          type: "Instituto",
+          category: "Centro de Pesquisa",
+          location: "Recife",
+          impactArea: "Capacitação Profissional",
+          impactDescription:
+            "Desenvolve programas de qualificação profissional para o setor de comércio e serviços, beneficiando milhares de pessoas anualmente.",
+          iconType: "business",
+        },
+        {
+          id: 9,
+          name: "SENAC Pernambuco",
+          type: "Instituto",
+          category: "Instituto Técnico",
+          location: "Recife",
+          impactArea: "Formação Técnica",
+          impactDescription:
+            "Oferece cursos profissionalizantes em diversas áreas, preparando jovens e adultos para o mercado de trabalho.",
+          iconType: "education",
+        },
+        {
+          id: 10,
+          name: "SENAI Pernambuco",
+          type: "Instituto",
+          category: "Instituto Técnico",
+          location: "Recife",
+          impactArea: "Formação Industrial",
+          impactDescription:
+            "Referência em educação profissional para o setor industrial, com laboratórios modernos e parcerias com empresas.",
+          iconType: "business",
+        },
+        {
+          id: 11,
+          name: "Instituto Boa Vista",
+          type: "ONG",
+          category: "Organização Social",
+          location: "Recife",
+          impactArea: "Inclusão Digital",
+          impactDescription:
+            "Promove a inclusão digital em comunidades carentes, beneficiando mais de 2.000 jovens anualmente com cursos gratuitos de tecnologia.",
+          iconType: "social",
+        },
+        {
+          id: 12,
+          name: "Centro de Tecnologias Sociais Capibaribe",
+          type: "ONG",
+          category: "Organização Social",
+          location: "Recife",
+          impactArea: "Inovação Social",
+          impactDescription:
+            "Desenvolve soluções tecnológicas para problemas sociais, com foco em sustentabilidade e melhoria da qualidade de vida em comunidades.",
+          iconType: "community",
+        },
+      ];
+
+      setTimeout(() => {
+        setInstitutionsList(mockInstitutions);
+        setIsLoading(false);
+      }, 800); // Simulando um pequeno delay de carregamento
     };
-    fetchRankingData();
+
+    loadInstitutions();
   }, []);
 
-  // Preparar dados para os gráficos - será recalculado quando institutionsList mudar
-  const top5Institutions = institutionsList.slice(0, 5);
+  // Função para renderizar o ícone com base no tipo
+  const getIconByType = (type: string) => {
+    switch (type) {
+      case "education":
+        return <GraduationCap className="h-10 w-10 text-blue-500" />;
+      case "tech":
+        return <Laptop className="h-10 w-10 text-purple-500" />;
+      case "social":
+        return <Heart className="h-10 w-10 text-pink-500" />;
+      case "business":
+        return <Briefcase className="h-10 w-10 text-amber-500" />;
+      case "health":
+        return <Heart className="h-10 w-10 text-red-500" />;
+      case "global":
+        return <Globe className="h-10 w-10 text-green-500" />;
+      case "research":
+        return <BookOpen className="h-10 w-10 text-indigo-500" />;
+      case "community":
+        return <Handshake className="h-10 w-10 text-emerald-500" />;
+      default:
+        return <Building className="h-10 w-10 text-gray-500" />;
+    }
+  };
 
-  const barChartData = top5Institutions.map((inst) => ({
-    name: inst.name,
-    contratações: inst.hires,
-    fill: inst.type === "Pública" ? "#9b87f5" : "#0EA5E9",
-  }));
-
-  const pieChartData = [
-    {
-      name: "Públicas",
-      value: institutionsList
-        .filter((i) => i.type === "Pública")
-        .reduce((acc, curr) => acc + curr.hires, 0),
-      fill: "#9b87f5",
-    },
-    {
-      name: "Privadas",
-      value: institutionsList
-        .filter((i) => i.type === "Privada")
-        .reduce((acc, curr) => acc + curr.hires, 0),
-      fill: "#0EA5E9",
-    },
-  ];
-
-  const yearsSet = new Set<string>();
-  institutionsList.forEach((inst) => {
-    inst.yearlyHires?.forEach((yh) => yearsSet.add(yh.year));
-  });
-  const years = Array.from(yearsSet).sort();
-
-  const lineChartData = years.map((year) => {
-    const dataPoint: any = { year };
-    top5Institutions.forEach((inst) => {
-      const yearData = inst.yearlyHires?.find((yh) => yh.year === year);
-      dataPoint[inst.name] = yearData?.hires || 0;
-    });
-    return dataPoint;
-  });
-
-  const COLORS = ["#9b87f5", "#0EA5E9", "#F97316", "#D946EF", "#8B5CF6"];
+  const filteredInstitutions =
+    activeFilter === "todas"
+      ? institutionsList
+      : institutionsList.filter(
+          (inst) =>
+            inst.type.toLowerCase() === activeFilter.toLowerCase() ||
+            inst.category.toLowerCase() === activeFilter.toLowerCase() ||
+            inst.impactArea.toLowerCase().includes(activeFilter.toLowerCase())
+        );
 
   if (isLoading) {
     return (
-      <section id="ranking" className="py-20 bg-gray-50">
+      <section id="institutions" className="py-20 bg-gray-50">
         <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
-            Ranking de Instituições
+            Instituições que Transformam
           </h2>
-          <p className="text-gray-600">Carregando dados do ranking...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (institutionsList.length === 0 && !isLoading) {
-    return (
-      <section id="ranking" className="py-20 bg-gray-50">
-        <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
-            Ranking de Instituições
-          </h2>
-          <p className="text-gray-600">
-            Nenhum dado de ranking disponível no momento.
+          <p className="text-gray-600 mb-8">
+            Carregando informações das instituições...
           </p>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-si-blue"></div>
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section id="ranking" className="py-20 bg-gray-50">
+    <section id="institutions" className="py-20 bg-gray-50">
       <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
-            Ranking de Instituições
+            Instituições que Transformam
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Instituições que mais preparam talentos para o mercado de trabalho,
-            com base em contratações reais feitas por meio da nossa plataforma.
+            Conheça as organizações de Recife que estão promovendo oportunidades
+            e mudando trajetórias.
           </p>
         </div>
 
-        <Tabs
-          defaultValue="table"
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <div className="flex justify-center mb-6">
-            <TabsList>
-              <TabsTrigger value="table" className="flex items-center gap-1">
-                <Trophy className="w-4 h-4" />
-                Tabela
-              </TabsTrigger>
-              <TabsTrigger value="bar" className="flex items-center gap-1">
-                <BarChartIcon className="w-4 h-4" />
-                Gráfico de Barras
-              </TabsTrigger>
-              <TabsTrigger value="pie" className="flex items-center gap-1">
-                <PieChartIcon className="w-4 h-4" />
-                Gráfico de Pizza
-              </TabsTrigger>
-              <TabsTrigger value="line" className="flex items-center gap-1">
-                <LineChartIcon className="w-4 h-4" />
-                Evolução Anual
-              </TabsTrigger>
-            </TabsList>
-          </div>
+        <div className="mb-8">
+          <Tabs defaultValue="todas" onValueChange={setActiveFilter}>
+            <div className="flex justify-center mb-6 flex-wrap gap-2">
+              <TabsList className="mb-2">
+                <TabsTrigger value="todas">Todas</TabsTrigger>
+                <TabsTrigger value="pública">Instituições Públicas</TabsTrigger>
+                <TabsTrigger value="privada">Instituições Privadas</TabsTrigger>
+                <TabsTrigger value="ong">ONGs</TabsTrigger>
+                <TabsTrigger value="instituto">Institutos</TabsTrigger>
+              </TabsList>
+              <TabsList>
+                <TabsTrigger value="universidade">Universidades</TabsTrigger>
+                <TabsTrigger value="faculdade">Faculdades</TabsTrigger>
+                <TabsTrigger value="instituto técnico">
+                  Institutos Técnicos
+                </TabsTrigger>
+                <TabsTrigger value="inovação">Inovação</TabsTrigger>
+              </TabsList>
+            </div>
+          </Tabs>
+        </div>
 
-          <TabsContent value="table">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-si-blue text-white">
-                <CardTitle className="flex items-center justify-center text-center">
-                  <Trophy className="mr-2 h-6 w-6" />
-                  Instituições com Mais Contratações
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12 text-center">
-                          Posição
-                        </TableHead>
-                        <TableHead>Instituição</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead className="text-right">
-                          Contratações
-                        </TableHead>
-                        <TableHead>Localização</TableHead>
-                        <TableHead className="text-center">Avaliação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {institutionsList.map((institution, index) => (
-                        <TableRow
-                          key={institution.id}
-                          className={index < 3 ? "bg-yellow-50" : ""}
-                        >
-                          <TableCell className="text-center font-bold">
-                            {index === 0 ? (
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-400 text-white">
-                                1
-                              </span>
-                            ) : index === 1 ? (
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-300 text-white">
-                                2
-                              </span>
-                            ) : index === 2 ? (
-                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-700 text-white">
-                                3
-                              </span>
-                            ) : (
-                              index + 1
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {institution.name}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                institution.type === "Pública"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-blue-100 text-blue-800"
-                              }`}
-                            >
-                              {institution.type}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {institution.hires}
-                          </TableCell>
-                          <TableCell>{institution.location}</TableCell>
-                          <TableCell className="text-center">
-                            <div className="flex items-center justify-center">
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <svg
-                                    key={i}
-                                    className={`w-4 h-4 ${
-                                      i < Math.floor(institution.rating)
-                                        ? "text-yellow-400"
-                                        : "text-gray-300"
-                                    }`}
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                  >
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                  </svg>
-                                ))}
-                              </div>
-                              <span className="ml-1 text-xs font-medium">
-                                {institution.rating.toFixed(1)}
-                              </span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="bar">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-si-blue text-white">
-                <CardTitle className="flex items-center justify-center text-center">
-                  <BarChartIcon className="mr-2 h-6 w-6" />
-                  Top 5 Instituições por Contratações
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="h-[400px] w-full">
-                  <ChartContainer
-                    config={{
-                      Públicas: { color: "#9b87f5" },
-                      Privadas: { color: "#0EA5E9" },
-                    }}
-                  >
-                    <BarChart
-                      data={barChartData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 40 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" height={40} />
-                      <YAxis
-                        label={{
-                          value: "Contratações",
-                          angle: -90,
-                          position: "insideLeft",
-                          style: { textAnchor: "middle" },
-                        }}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Legend />
-                      <Bar dataKey="contratações" fill="#9b87f5">
-                        {barChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="pie">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-si-blue text-white">
-                <CardTitle className="flex items-center justify-center text-center">
-                  <PieChartIcon className="mr-2 h-6 w-6" />
-                  Contratações por Tipo de Instituição
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieChartData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={true}
-                        outerRadius={150}
-                        fill="#8884d8"
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
-                      >
-                        {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="line">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-si-blue text-white">
-                <CardTitle className="flex items-center justify-center text-center">
-                  <LineChartIcon className="mr-2 h-6 w-6" />
-                  Evolução Anual de Contratações
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="h-[400px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={lineChartData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="year" />
-                      <YAxis
-                        label={{
-                          value: "Contratações",
-                          angle: -90,
-                          position: "insideLeft",
-                          style: { textAnchor: "middle" },
-                        }}
-                      />
-                      <Tooltip />
-                      <Legend />
-                      {top5Institutions.map((inst, index) => (
-                        <Line
-                          key={inst.id}
-                          type="monotone"
-                          dataKey={inst.name}
-                          stroke={COLORS[index % COLORS.length]}
-                          activeDot={{ r: 8 }}
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredInstitutions.length > 0 ? (
+            filteredInstitutions.map((institution) => (
+              <Card
+                key={institution.id}
+                className="overflow-hidden transition-all hover:shadow-lg flex flex-col"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getIconByType(institution.iconType)}
+                      <div>
+                        <CardTitle className="text-lg">
+                          {institution.name}
+                        </CardTitle>
+                        <div className="flex gap-2 mt-1 flex-wrap">
+                          <Badge
+                            variant={
+                              institution.type === "Pública"
+                                ? "secondary"
+                                : institution.type === "ONG"
+                                ? "destructive"
+                                : institution.type === "Instituto"
+                                ? "outline"
+                                : "default"
+                            }
+                          >
+                            {institution.type}
+                          </Badge>
+                          <Badge variant="outline" className="bg-gray-50">
+                            {institution.category}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-3">
+                    <Badge variant="default" className="bg-si-blue text-white">
+                      {institution.impactArea}
+                    </Badge>
+                  </div>
+                  <CardDescription className="text-sm">
+                    {institution.impactDescription}
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10">
+              <Building className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">
+                Nenhuma instituição encontrada com os filtros selecionados.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
