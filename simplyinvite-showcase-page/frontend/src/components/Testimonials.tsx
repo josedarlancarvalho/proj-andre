@@ -45,7 +45,6 @@ const Testimonials = () => {
         {
           id: 1,
           name: "Ana Clara Silva",
-          photo: "/avatars/ana.jpg",
           institution: "UFPE",
           course: "Ciência da Computação",
           graduationYear: "2021",
@@ -57,7 +56,6 @@ const Testimonials = () => {
         {
           id: 2,
           name: "Thiago Pereira",
-          photo: "/avatars/thiago.jpg",
           institution: "Instituto Boa Vista",
           course: "Programação Web",
           graduationYear: "2022",
@@ -69,7 +67,6 @@ const Testimonials = () => {
         {
           id: 3,
           name: "Mariana Alves",
-          photo: "/avatars/mariana.jpg",
           institution: "FBV",
           course: "Administração",
           graduationYear: "2020",
@@ -81,7 +78,6 @@ const Testimonials = () => {
         {
           id: 4,
           name: "Lucas Santana",
-          photo: "/avatars/lucas.jpg",
           institution: "SENAI Pernambuco",
           course: "Automação Industrial",
           graduationYear: "2021",
@@ -93,7 +89,6 @@ const Testimonials = () => {
         {
           id: 5,
           name: "Fernanda Barros",
-          photo: "/avatars/fernanda.jpg",
           institution: "Centro de Tecnologias Sociais Capibaribe",
           course: "Tecnologias Sustentáveis",
           graduationYear: "2022",
@@ -105,7 +100,6 @@ const Testimonials = () => {
         {
           id: 6,
           name: "Rafael Mendonça",
-          photo: "/avatars/rafael.jpg",
           institution: "CESAR School",
           course: "Design de Interação",
           graduationYear: "2021",
@@ -127,16 +121,16 @@ const Testimonials = () => {
 
   if (isLoading) {
     return (
-      <section id="testimonials" className="py-20 bg-white">
+      <section id="testimonials" className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-si-blue mb-3 sm:mb-4">
             Histórias de Sucesso
           </h2>
-          <p className="text-gray-600 mb-8">
+          <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
             Carregando histórias de sucesso...
           </p>
           <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-si-blue"></div>
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-t-2 border-b-2 border-si-blue"></div>
           </div>
         </div>
       </section>
@@ -144,30 +138,30 @@ const Testimonials = () => {
   }
 
   return (
-    <section id="testimonials" className="py-20 bg-white">
+    <section id="testimonials" className="py-12 sm:py-16 md:py-20 bg-white">
       <div className="section-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-si-blue mb-4">
+        <div className="text-center mb-10 sm:mb-12 md:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-si-blue mb-3 sm:mb-4">
             Histórias de Sucesso
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
             Veja como a formação nas instituições de Recife transformou
             trajetórias profissionais.
           </p>
         </div>
 
         {/* Grid para desktop e tablet */}
-        <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {successStories.map((story) => (
             <Card
               key={story.id}
-              className="overflow-hidden hover:shadow-lg transition-all"
+              className="overflow-hidden hover:shadow-lg transition-all h-full"
             >
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2"></div>
-              <CardHeader>
-                <div className="flex items-center gap-4 mb-2">
-                  <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                    <AvatarFallback className="bg-si-blue text-white">
+              <CardHeader className="p-4 sm:p-6">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-white shadow-sm">
+                    <AvatarFallback className="bg-si-blue text-white text-sm sm:text-base">
                       {story.name.substring(0, 2)}
                     </AvatarFallback>
                     {story.photo && (
@@ -175,46 +169,53 @@ const Testimonials = () => {
                     )}
                   </Avatar>
                   <div>
-                    <CardTitle className="text-xl">{story.name}</CardTitle>
-                    <CardDescription className="text-sm font-medium text-si-blue">
+                    <CardTitle className="text-lg sm:text-xl">
+                      {story.name}
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm font-medium text-si-blue">
                       {story.currentRole}
                     </CardDescription>
-                    <p className="text-sm text-gray-500">{story.company}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {story.company}
+                    </p>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <div className="flex items-center gap-1 mb-2">
-                    <GraduationCap className="h-4 w-4 text-si-blue" />
-                    <span className="text-sm font-medium">
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <div className="mb-3 sm:mb-4">
+                  <div className="flex items-center gap-1 mb-1 sm:mb-2 flex-wrap">
+                    <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-si-blue" />
+                    <span className="text-xs sm:text-sm font-medium">
                       {story.institution}
                     </span>
                     <span className="text-xs text-gray-500 ml-1">
                       • {story.course}
                     </span>
                   </div>
-                  <Badge variant="outline" className="bg-gray-50">
+                  <Badge variant="outline" className="bg-gray-50 text-xs">
                     Formado em {story.graduationYear}
                   </Badge>
                 </div>
-                <p className="text-gray-700 text-sm">"{story.story}"</p>
+                <p className="text-gray-700 text-xs sm:text-sm">
+                  "{story.story}"
+                </p>
               </CardContent>
-              <CardFooter className="border-t pt-4 flex justify-between">
+              <CardFooter className="border-t p-4 sm:p-6 flex justify-between">
                 <div className="flex items-center gap-1 text-amber-500">
-                  <Star className="h-4 w-4 fill-amber-500" />
-                  <Star className="h-4 w-4 fill-amber-500" />
-                  <Star className="h-4 w-4 fill-amber-500" />
-                  <Star className="h-4 w-4 fill-amber-500" />
-                  <Star className="h-4 w-4 fill-amber-500" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-amber-500" />
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-si-blue flex items-center gap-1"
+                  className="text-si-blue flex items-center gap-1 text-xs sm:text-sm h-8 px-2 sm:px-3"
                 >
-                  <Bookmark className="h-4 w-4" />
-                  <span>Salvar história</span>
+                  <Bookmark className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Salvar história</span>
+                  <span className="sm:hidden">Salvar</span>
                 </Button>
               </CardFooter>
             </Card>
@@ -222,18 +223,18 @@ const Testimonials = () => {
         </div>
 
         {/* Carrossel para mobile */}
-        <div className="md:hidden">
+        <div className="sm:hidden">
           <Carousel className="w-full">
             <CarouselContent>
               {successStories.map((story) => (
-                <CarouselItem key={story.id}>
+                <CarouselItem key={story.id} className="w-full">
                   <div className="p-1">
                     <Card className="overflow-hidden hover:shadow-lg transition-all">
                       <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-2"></div>
-                      <CardHeader>
-                        <div className="flex items-center gap-4 mb-2">
-                          <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
-                            <AvatarFallback className="bg-si-blue text-white">
+                      <CardHeader className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                            <AvatarFallback className="bg-si-blue text-white text-sm">
                               {story.name.substring(0, 2)}
                             </AvatarFallback>
                             {story.photo && (
@@ -241,49 +242,52 @@ const Testimonials = () => {
                             )}
                           </Avatar>
                           <div>
-                            <CardTitle className="text-xl">
+                            <CardTitle className="text-lg">
                               {story.name}
                             </CardTitle>
-                            <CardDescription className="text-sm font-medium text-si-blue">
+                            <CardDescription className="text-xs font-medium text-si-blue">
                               {story.currentRole}
                             </CardDescription>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-xs text-gray-500">
                               {story.company}
                             </p>
                           </div>
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <div className="mb-4">
-                          <div className="flex items-center gap-1 mb-2">
-                            <GraduationCap className="h-4 w-4 text-si-blue" />
-                            <span className="text-sm font-medium">
+                      <CardContent className="p-4 pt-0">
+                        <div className="mb-3">
+                          <div className="flex items-center gap-1 mb-1 flex-wrap">
+                            <GraduationCap className="h-3 w-3 text-si-blue" />
+                            <span className="text-xs font-medium">
                               {story.institution}
                             </span>
                             <span className="text-xs text-gray-500 ml-1">
                               • {story.course}
                             </span>
                           </div>
-                          <Badge variant="outline" className="bg-gray-50">
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-50 text-xs"
+                          >
                             Formado em {story.graduationYear}
                           </Badge>
                         </div>
-                        <p className="text-gray-700 text-sm">"{story.story}"</p>
+                        <p className="text-gray-700 text-xs">"{story.story}"</p>
                       </CardContent>
-                      <CardFooter className="border-t pt-4 flex justify-between">
+                      <CardFooter className="border-t p-4 flex justify-between">
                         <div className="flex items-center gap-1 text-amber-500">
-                          <Star className="h-4 w-4 fill-amber-500" />
-                          <Star className="h-4 w-4 fill-amber-500" />
-                          <Star className="h-4 w-4 fill-amber-500" />
-                          <Star className="h-4 w-4 fill-amber-500" />
-                          <Star className="h-4 w-4 fill-amber-500" />
+                          <Star className="h-3 w-3 fill-amber-500" />
+                          <Star className="h-3 w-3 fill-amber-500" />
+                          <Star className="h-3 w-3 fill-amber-500" />
+                          <Star className="h-3 w-3 fill-amber-500" />
+                          <Star className="h-3 w-3 fill-amber-500" />
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-si-blue flex items-center gap-1"
+                          className="text-si-blue flex items-center gap-1 text-xs h-8 px-2"
                         >
-                          <Bookmark className="h-4 w-4" />
+                          <Bookmark className="h-3 w-3" />
                           <span>Salvar</span>
                         </Button>
                       </CardFooter>
@@ -292,9 +296,9 @@ const Testimonials = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="flex justify-center mt-6">
-              <CarouselPrevious className="position-static transform-none mx-2" />
-              <CarouselNext className="position-static transform-none mx-2" />
+            <div className="flex justify-center mt-4">
+              <CarouselPrevious className="position-static transform-none mx-2 h-8 w-8" />
+              <CarouselNext className="position-static transform-none mx-2 h-8 w-8" />
             </div>
           </Carousel>
         </div>
