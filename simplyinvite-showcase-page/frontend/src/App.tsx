@@ -25,6 +25,7 @@ import HRProfile from "@/pages/hr/HRProfile";
 
 // Páginas de onboarding
 import TalentOnboardingForm from "@/pages/talent/TalentOnboardingForm";
+import TalentOnboardingFormHr from "@/pages/hr/TalentOnboardingFormHr";
 
 // Páginas de submissões
 import TalentSubmissions from "@/pages/talent/TalentSubmissions";
@@ -56,7 +57,7 @@ import TalentProgress from "@/pages/talent/TalentProgress"; // Componente para M
 import TalentInvitations from "@/pages/talent/TalentInvitations"; // Componente para Convites
 
 // Importando componentes para Notificações e Configurações
-import NotificacoesPage from "@/pages/NotificacoesPage"; // Componente placeholder
+import NotificacoesPage from "@/pages/NotificacoesPage";
 import ConfiguracoesPage from "@/pages/ConfiguracoesPage"; // Componente placeholder
 
 const App = () => {
@@ -156,6 +157,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredProfileType="rh">
                 <EvaluationPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rh/onboarding"
+            element={
+              <ProtectedRoute requiredProfileType="rh">
+                <TalentOnboardingFormHr />
               </ProtectedRoute>
             }
           />

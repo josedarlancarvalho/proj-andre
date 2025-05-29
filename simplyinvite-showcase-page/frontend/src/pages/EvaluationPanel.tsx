@@ -8,6 +8,7 @@ import StatCard from "@/components/panels/StatCard";
 import ProjectCard from "@/components/panels/ProjectCard";
 import { Clock, Medal, User, Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Interfaces
 interface PendingProject {
@@ -20,7 +21,7 @@ interface PendingProject {
   // category: string;
   // For ProjectCard compatibility, assuming these might come from API or be set to default
   medalType: "ouro" | "prata" | "bronze" | null;
-  hasFeedback: boolean; 
+  hasFeedback: boolean;
 }
 
 interface EvaluationHistoryItem {
@@ -40,9 +41,11 @@ interface HRStats {
 }
 
 const EvaluationPanel = () => {
-  const [userName, setUserName] = useState("Carregando...");
+  const { user } = useAuth();
   const [pendingProjects, setPendingProjects] = useState<PendingProject[]>([]);
-  const [evaluationHistory, setEvaluationHistory] = useState<EvaluationHistoryItem[]>([]);
+  const [evaluationHistory, setEvaluationHistory] = useState<
+    EvaluationHistoryItem[]
+  >([]);
   const [stats, setStats] = useState<HRStats>({
     evaluatedProjects: 0,
     goldMedals: 0,
@@ -53,12 +56,15 @@ const EvaluationPanel = () => {
   useEffect(() => {
     // TODO: Replace with actual API calls
     const fetchHrData = async () => {
-      // const userResponse = await fetch("/api/hr/user-info");
-      // const userData = await userResponse.json();
-      // setUserName(userData.name);
+      // Aqui seria feita a chamada real à API
       setPendingProjects([]);
       setEvaluationHistory([]);
-      setStats({ evaluatedProjects: 0, goldMedals: 0, silverMedals: 0, bronzeMedals: 0 });
+      setStats({
+        evaluatedProjects: 0,
+        goldMedals: 0,
+        silverMedals: 0,
+        bronzeMedals: 0,
+      });
     };
     fetchHrData();
   }, []);
@@ -111,7 +117,9 @@ const EvaluationPanel = () => {
     <UserPanelLayout userType="rh">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Olá, {userName}!</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Olá, {user?.nomeCompleto || "Usuário"}!
+          </h1>
           <Link to="/rh/projetos-pendentes">
             <Button>
               <Search className="mr-2 h-4 w-4" />
@@ -119,30 +127,30 @@ const EvaluationPanel = () => {
             </Button>
           </Link>
         </div>
-        
+
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard 
+          <StatCard
             title="Projetos Avaliados"
             value={String(stats.evaluatedProjects)}
             icon={<Clock className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Medalhas de Ouro"
             value={String(stats.goldMedals)}
             icon={<Medal className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Medalhas de Prata"
             value={String(stats.silverMedals)}
             icon={<Medal className="h-4 w-4" />}
           />
-          <StatCard 
+          <StatCard
             title="Medalhas de Bronze"
             value={String(stats.bronzeMedals)}
             icon={<Medal className="h-4 w-4" />}
           />
         </div>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Projetos Pendentes para Avaliação</CardTitle>
@@ -152,27 +160,29 @@ const EvaluationPanel = () => {
               </Button>
             </Link>
           </CardHeader>
-          <CardContent>            
+          <CardContent>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pendingProjects.length > 0 ? (
-                pendingProjects.slice(0, 3).map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    title={`${project.title} - ${project.author}`}
-                    image={project.image}
-                    medalType={project.medalType}
-                    hasFeedback={project.hasFeedback}
-                    onViewDetails={() => handleEvaluate(project.id)}
-                    userType="hr"
-                  />
-                ))
+                pendingProjects
+                  .slice(0, 3)
+                  .map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      title={`${project.title} - ${project.author}`}
+                      image={project.image}
+                      medalType={project.medalType}
+                      hasFeedback={project.hasFeedback}
+                      onViewDetails={() => handleEvaluate(project.id)}
+                      userType="hr"
+                    />
+                  ))
               ) : (
                 <p>Nenhum projeto pendente no momento.</p>
               )}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Avaliações Recentes</CardTitle>
@@ -186,7 +196,10 @@ const EvaluationPanel = () => {
             <div className="space-y-4">
               {evaluationHistory.length > 0 ? (
                 evaluationHistory.slice(0, 2).map((item) => (
-                  <div key={item.id} className="flex justify-between items-center p-4 border rounded-lg">
+                  <div
+                    key={item.id}
+                    className="flex justify-between items-center p-4 border rounded-lg"
+                  >
                     <div>
                       <h3 className="font-medium">{item.projectTitle}</h3>
                       <p className="text-sm text-muted-foreground">
@@ -195,7 +208,9 @@ const EvaluationPanel = () => {
                       <div className="mt-1 flex items-center gap-2">
                         {getMedalBadge(item.medal)}
                         {item.forwardedToManager ? (
-                          <Badge variant="outline" className="bg-green-50">Encaminhado</Badge>
+                          <Badge variant="outline" className="bg-green-50">
+                            Encaminhado
+                          </Badge>
                         ) : (
                           <Badge variant="outline">Pendente</Badge>
                         )}

@@ -100,7 +100,7 @@ exports.encaminharParaGestor = async (req, res) => {
 exports.buscarEstatisticas = async (req, res) => {
   try {
     const avaliadorId = req.usuario.id;
-    
+
     const estatisticas = {
       avaliacoesTotal: await db.Avaliacao.count({ where: { avaliadorId } }),
       medalhas: {
@@ -187,7 +187,7 @@ exports.buscarProjeto = async (req, res) => {
 exports.buscarPerfil = async (req, res) => {
   try {
     const avaliadorId = req.usuario.id;
-    const usuario = await db.Usuario.findByPk(usuarioId, {
+    const usuario = await db.Usuario.findByPk(avaliadorId, {
       attributes: { exclude: ["senha"] },
       include: [
         {
@@ -211,7 +211,7 @@ exports.buscarPerfil = async (req, res) => {
 exports.atualizarPerfil = async (req, res) => {
   try {
     const avaliadorId = req.usuario.id;
-    const usuario = await db.Usuario.findByPk(usuarioId);
+    const usuario = await db.Usuario.findByPk(avaliadorId);
 
     if (!usuario) {
       return res.status(404).json({ message: "Usuário não encontrado" });
@@ -219,7 +219,7 @@ exports.atualizarPerfil = async (req, res) => {
 
     await usuario.update(req.body);
 
-    const usuarioAtualizado = await db.Usuario.findByPk(usuarioId, {
+    const usuarioAtualizado = await db.Usuario.findByPk(avaliadorId, {
       attributes: { exclude: ["senha"] },
       include: [
         {
@@ -231,6 +231,7 @@ exports.atualizarPerfil = async (req, res) => {
 
     return res.json(usuarioAtualizado);
   } catch (error) {
+    console.error("Erro ao atualizar perfil do RH:", error);
     return res.status(500).json({ message: "Erro ao atualizar perfil" });
   }
 };

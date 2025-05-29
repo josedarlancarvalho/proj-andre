@@ -46,17 +46,32 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Verifica se o usuário é do tipo jovem, está na rota correta para jovem, e precisa completar o onboarding
-  const needsOnboarding =
+  // Verifica se o usuário precisa completar o onboarding (jovem ou rh)
+  const needsOnboardingJovem =
     profileType === "jovem" &&
     requiredProfileType === "jovem" &&
     user &&
     !user.onboardingCompleto;
 
-  // Se o usuário precisa de onboarding e não está na rota de onboarding, redireciona para lá
-  if (needsOnboarding && location.pathname !== "/jovem/onboarding") {
-    console.log("Usuário precisa completar onboarding, redirecionando...");
+  // Verifica se o usuário do tipo RH precisa completar o onboarding
+  const needsOnboardingRh =
+    profileType === "rh" &&
+    requiredProfileType === "rh" &&
+    user &&
+    !user.onboardingCompleto;
+
+  // Se o usuário jovem precisa de onboarding e não está na rota de onboarding, redireciona para lá
+  if (needsOnboardingJovem && location.pathname !== "/jovem/onboarding") {
+    console.log(
+      "Usuário jovem precisa completar onboarding, redirecionando..."
+    );
     return <OnboardingForm />;
+  }
+
+  // Se o usuário RH precisa de onboarding e não está na rota de onboarding, redireciona para lá
+  if (needsOnboardingRh && location.pathname !== "/rh/onboarding") {
+    console.log("Usuário RH precisa completar onboarding, redirecionando...");
+    return <Navigate to="/rh/onboarding" replace />;
   }
 
   return <>{children}</>;

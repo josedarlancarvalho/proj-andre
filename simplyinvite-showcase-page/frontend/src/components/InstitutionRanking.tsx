@@ -275,23 +275,23 @@ const InstitutionRanking = () => {
                 <TabsTrigger value="ong">ONGs</TabsTrigger>
                 <TabsTrigger value="instituto">Institutos</TabsTrigger>
               </TabsList>
-              <TabsList>
+            <TabsList>
                 <TabsTrigger value="universidade">Universidades</TabsTrigger>
                 <TabsTrigger value="faculdade">Faculdades</TabsTrigger>
                 <TabsTrigger value="instituto técnico">
                   Institutos Técnicos
-                </TabsTrigger>
+              </TabsTrigger>
                 <TabsTrigger value="inovação">Inovação</TabsTrigger>
-              </TabsList>
+            </TabsList>
             </div>
           </Tabs>
-        </div>
+          </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredInstitutions.length > 0 ? (
             filteredInstitutions.map((institution) => (
               <Card
-                key={institution.id}
+                          key={institution.id}
                 className="overflow-hidden transition-all hover:shadow-lg flex flex-col"
               >
                 <CardHeader className="pb-2">
@@ -300,12 +300,12 @@ const InstitutionRanking = () => {
                       {getIconByType(institution.iconType)}
                       <div>
                         <CardTitle className="text-lg">
-                          {institution.name}
+                            {institution.name}
                         </CardTitle>
                         <div className="flex gap-2 mt-1 flex-wrap">
                           <Badge
                             variant={
-                              institution.type === "Pública"
+                                institution.type === "Pública"
                                 ? "secondary"
                                 : institution.type === "ONG"
                                 ? "destructive"
@@ -313,28 +313,28 @@ const InstitutionRanking = () => {
                                 ? "outline"
                                 : "default"
                             }
-                          >
-                            {institution.type}
+                            >
+                              {institution.type}
                           </Badge>
                           <Badge variant="outline" className="bg-gray-50">
                             {institution.category}
                           </Badge>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
+                              </div>
+                            </div>
+                </div>
+              </CardHeader>
                 <CardContent>
                   <div className="mb-3">
                     <Badge variant="default" className="bg-si-blue text-white">
                       {institution.impactArea}
                     </Badge>
-                  </div>
+                </div>
                   <CardDescription className="text-sm">
                     {institution.impactDescription}
                   </CardDescription>
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
             ))
           ) : (
             <div className="col-span-full text-center py-10">
@@ -342,9 +342,9 @@ const InstitutionRanking = () => {
               <p className="text-gray-500">
                 Nenhuma instituição encontrada com os filtros selecionados.
               </p>
-            </div>
+                </div>
           )}
-        </div>
+                </div>
       </div>
     </section>
   );
