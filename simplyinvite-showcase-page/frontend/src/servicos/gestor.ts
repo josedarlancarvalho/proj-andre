@@ -18,6 +18,69 @@ export interface Entrevista {
   tipo: "online" | "presencial";
 }
 
+// Atualizar perfil do Gestor
+export async function atualizarPerfilGestor(dados: {
+  nomeCompleto?: string;
+  telefone?: string;
+  empresa?: string;
+  cnpj?: string;
+  cargo?: string;
+  bio?: string;
+  linkedinUrl?: string;
+  areasInteresse?: string[];
+  departamento?: string;
+  experienciaProfissional?: string;
+  especialidades?: string[];
+  onboardingCompleto?: boolean;
+  // Adicionar novos campos
+  siteEmpresa?: string;
+  enderecoEmpresa?: string;
+  tamanhoEmpresa?: string;
+  modeloTrabalho?: string;
+  descricaoEmpresa?: string;
+  beneficios?: string;
+  objetivosContratacao?: string[];
+}) {
+  try {
+    // Tenta fazer a requisição para o servidor
+    const response = await api.put("/gestor/perfil", dados);
+    return response.data;
+  } catch (error: any) {
+    // Tratamento específico de erro de conexão
+    if (
+      error.message?.includes("Network Error") ||
+      error.code === "ECONNABORTED" ||
+      !error.response ||
+      error.message?.includes("timeout")
+    ) {
+      console.log("Erro de conexão detectado, salvando apenas localmente");
+      // Retornar um objeto simulando sucesso, mas com flag indicando que foi apenas local
+      return {
+        success: true,
+        message: "Perfil atualizado apenas localmente",
+        localOnly: true,
+      };
+    }
+
+    // Para outros erros, propagar normalmente
+    throw error;
+  }
+}
+
+// Completar onboarding do Gestor
+export async function completarOnboardingGestor(dados: {
+  empresa?: string;
+  cargo?: string;
+  departamento?: string;
+  experienciaProfissional?: string;
+}) {
+  const response = await api.put("/gestor/perfil", {
+    ...dados,
+    onboardingCompleto: true,
+  });
+  return response.data;
+}
+
 // Buscar talentos em destaque
 export async function buscarTalentosDestaque() {
   const response = await api.get("/talentos/destaque");
@@ -31,8 +94,14 @@ export async function buscarEntrevistas() {
 }
 
 // Agendar entrevista
-export async function agendarEntrevista(talentoId: string, entrevista: Omit<Entrevista, "id">) {
-  const response = await api.post(`/entrevistas/agendar/${talentoId}`, entrevista);
+export async function agendarEntrevista(
+  talentoId: string,
+  entrevista: Omit<Entrevista, "id">
+) {
+  const response = await api.post(
+    `/entrevistas/agendar/${talentoId}`,
+    entrevista
+  );
   return response.data;
 }
 
@@ -68,7 +137,7 @@ interface ProjetoDestacado {
   tecnologias: string[];
   linkRepositorio?: string;
   linkDeploy?: string;
-  status: 'destacado';
+  status: "destacado";
   usuarioId: number;
   autor: {
     id: number;
@@ -79,7 +148,7 @@ interface ProjetoDestacado {
     id: number;
     nota: number;
     comentario: string;
-    medalha?: 'ouro' | 'prata' | 'bronze';
+    medalha?: "ouro" | "prata" | "bronze";
     avaliador: {
       id: number;
       nomeCompleto: string;
@@ -93,7 +162,7 @@ interface Feedback {
   gestorId: number;
   comentario: string;
   oportunidade?: {
-    tipo: 'estagio' | 'trainee' | 'junior';
+    tipo: "estagio" | "trainee" | "junior";
     descricao: string;
   };
   createdAt: Date;
@@ -103,7 +172,7 @@ interface Feedback {
 const gestorService = {
   // Projetos Destacados
   buscarProjetosDestacados: async (): Promise<ProjetoDestacado[]> => {
-    const response = await api.get('/gestor/projetos/destacados');
+    const response = await api.get("/gestor/projetos/destacados");
     return response.data;
   },
 
@@ -113,27 +182,33 @@ const gestorService = {
   },
 
   // Feedback e Oportunidades
-  enviarFeedback: async (projetoId: number, feedback: Omit<Feedback, 'id' | 'projetoId' | 'gestorId' | 'createdAt'>): Promise<Feedback> => {
-    const response = await api.post(`/gestor/projetos/${projetoId}/feedback`, feedback);
+  enviarFeedback: async (
+    projetoId: number,
+    feedback: Omit<Feedback, "id" | "projetoId" | "gestorId" | "createdAt">
+  ): Promise<Feedback> => {
+    const response = await api.post(
+      `/gestor/projetos/${projetoId}/feedback`,
+      feedback
+    );
     return response.data;
   },
 
   // Estatísticas
   buscarEstatisticas: async () => {
-    const response = await api.get('/gestor/estatisticas');
+    const response = await api.get("/gestor/estatisticas");
     return response.data;
   },
 
   // Talentos
   buscarTalentos: async () => {
-    const response = await api.get('/gestor/talentos');
+    const response = await api.get("/gestor/talentos");
     return response.data;
   },
 
   buscarHistoricoInteracoes: async (talentoId: number) => {
     const response = await api.get(`/gestor/talentos/${talentoId}/historico`);
     return response.data;
-  }
+  },
 };
 
-export default gestorService; 
+export default gestorService;

@@ -65,4 +65,7 @@ router.get("/explorar", gestorController.explorarTalentos);
 // Rota para favoritos
 router.get("/favoritos", gestorController.buscarFavoritos);
 
+// Rota para perfil
+router.put("/perfil", gestorController.atualizarPerfil);
+
 module.exports = router;

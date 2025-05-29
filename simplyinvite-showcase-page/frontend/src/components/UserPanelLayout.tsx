@@ -29,6 +29,9 @@ import {
   Calendar,
   Building,
   MessageSquare,
+  Heart,
+  Building2,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";

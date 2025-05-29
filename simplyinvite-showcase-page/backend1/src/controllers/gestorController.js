@@ -249,8 +249,74 @@ exports.buscarFavoritos = async (req, res) => {
         },
       ],
     });
-    return res.json(favoritos);
+
+    res.json(favoritos);
   } catch (error) {
-    return res.status(500).json({ message: "Erro ao buscar favoritos" });
+    res.status(500).json({ message: "Erro ao buscar favoritos" });
+  }
+};
+
+// Atualizar perfil do gestor
+exports.atualizarPerfil = async (req, res) => {
+  try {
+    const gestorId = req.usuario.id;
+    const {
+      nomeCompleto,
+      telefone,
+      cidade,
+      empresa,
+      cnpj,
+      cargo,
+      departamento,
+      experienciaProfissional,
+      areasInteresse,
+      especialidades,
+      linkedinUrl,
+      onboardingCompleto,
+    } = req.body;
+
+    // Verificar se o usuário existe
+    const gestor = await db.Usuario.findByPk(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ message: "Gestor não encontrado" });
+    }
+
+    // Atualizar o perfil
+    await gestor.update({
+      nomeCompleto: nomeCompleto || gestor.nomeCompleto,
+      telefone: telefone || gestor.telefone,
+      cidade: cidade || gestor.cidade,
+      empresa: empresa || gestor.empresa,
+      cnpj: cnpj || gestor.cnpj,
+      cargo: cargo || gestor.cargo,
+      departamento: departamento || gestor.departamento,
+      experienciaProfissional:
+        experienciaProfissional || gestor.experienciaProfissional,
+      areasInteresse: areasInteresse || gestor.areasInteresse,
+      especialidades: especialidades || gestor.especialidades,
+      linkedinUrl: linkedinUrl || gestor.linkedinUrl,
+      onboardingCompleto:
+        onboardingCompleto !== undefined
+          ? onboardingCompleto
+          : gestor.onboardingCompleto,
+    });
+
+    // Retornar o perfil atualizado (sem a senha)
+    const perfilAtualizado = await db.Usuario.findByPk(gestorId, {
+      attributes: { exclude: ["senha"] },
+    });
+
+    return res.json({
+      message: "Perfil atualizado com sucesso",
+      usuario: perfilAtualizado,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar perfil do gestor:", error);
+    return res
+      .status(500)
+      .json({
+        message: "Erro ao atualizar perfil do gestor",
+        error: error.message,
+      });
   }
 };
