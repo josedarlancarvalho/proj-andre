@@ -249,8 +249,215 @@ exports.buscarFavoritos = async (req, res) => {
         },
       ],
     });
+<<<<<<< HEAD
     return res.json(favoritos);
   } catch (error) {
     return res.status(500).json({ message: "Erro ao buscar favoritos" });
+=======
+
+    res.json(favoritos);
+  } catch (error) {
+    res.status(500).json({ message: "Erro ao buscar favoritos" });
+  }
+};
+
+// Atualizar perfil do gestor
+exports.atualizarPerfil = async (req, res) => {
+  try {
+    const gestorId = req.usuario.id;
+    const {
+      nomeCompleto,
+      telefone,
+      cidade,
+      empresa,
+      cnpj,
+      cargo,
+      departamento,
+      experienciaProfissional,
+      areasInteresse,
+      especialidades,
+      linkedinUrl,
+      onboardingCompleto,
+    } = req.body;
+
+    // Verificar se o usuário existe
+    const gestor = await db.Usuario.findByPk(gestorId);
+    if (!gestor) {
+      return res.status(404).json({ message: "Gestor não encontrado" });
+    }
+
+    // Atualizar o perfil
+    await gestor.update({
+      nomeCompleto: nomeCompleto || gestor.nomeCompleto,
+      telefone: telefone || gestor.telefone,
+      cidade: cidade || gestor.cidade,
+      empresa: empresa || gestor.empresa,
+      cnpj: cnpj || gestor.cnpj,
+      cargo: cargo || gestor.cargo,
+      departamento: departamento || gestor.departamento,
+      experienciaProfissional:
+        experienciaProfissional || gestor.experienciaProfissional,
+      areasInteresse: areasInteresse || gestor.areasInteresse,
+      especialidades: especialidades || gestor.especialidades,
+      linkedinUrl: linkedinUrl || gestor.linkedinUrl,
+      onboardingCompleto:
+        onboardingCompleto !== undefined
+          ? onboardingCompleto
+          : gestor.onboardingCompleto,
+    });
+
+    // Retornar o perfil atualizado (sem a senha)
+    const perfilAtualizado = await db.Usuario.findByPk(gestorId, {
+      attributes: { exclude: ["senha"] },
+    });
+
+    return res.json({
+      message: "Perfil atualizado com sucesso",
+      usuario: perfilAtualizado,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar perfil do gestor:", error);
+    return res.status(500).json({
+      message: "Erro ao atualizar perfil do gestor",
+      error: error.message,
+    });
+  }
+};
+
+// Buscar projetos avaliados pelo RH
+exports.buscarProjetosAvaliados = async (req, res) => {
+  try {
+    const projetos = await db.Projeto.findAll({
+      where: {
+        status: "avaliado",
+      },
+      include: [
+        {
+          model: db.Usuario,
+          as: "usuario",
+          attributes: [
+            "id",
+            "nomeCompleto",
+            "email",
+            "cidade",
+            "formacaoCurso",
+            "formacaoInstituicao",
+          ],
+        },
+        {
+          model: db.Avaliacao,
+          as: "avaliacoes",
+          include: [
+            {
+              model: db.Usuario,
+              as: "avaliador",
+              attributes: ["id", "nomeCompleto", "email"],
+            },
+          ],
+        },
+        {
+          model: db.Feedback,
+          as: "feedbacks",
+          include: [
+            {
+              model: db.Usuario,
+              as: "gestor",
+              attributes: ["id", "nomeCompleto", "email"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json(projetos);
+  } catch (error) {
+    console.error("Erro ao buscar projetos avaliados:", error);
+    res.status(500).json({ message: "Erro ao buscar projetos avaliados" });
+  }
+};
+
+// Buscar projetos que já receberam feedback
+exports.buscarProjetosComFeedback = async (req, res) => {
+  try {
+    const projetos = await db.Projeto.findAll({
+      include: [
+        {
+          model: db.Usuario,
+          as: "usuario",
+          attributes: [
+            "id",
+            "nomeCompleto",
+            "email",
+            "cidade",
+            "formacaoCurso",
+            "formacaoInstituicao",
+          ],
+        },
+        {
+          model: db.Avaliacao,
+          as: "avaliacoes",
+          include: [
+            {
+              model: db.Usuario,
+              as: "avaliador",
+              attributes: ["id", "nomeCompleto", "email"],
+            },
+          ],
+        },
+        {
+          model: db.Feedback,
+          as: "feedbacks",
+          required: true, // INNER JOIN - apenas projetos com feedback
+          include: [
+            {
+              model: db.Usuario,
+              as: "gestor",
+              attributes: ["id", "nomeCompleto", "email"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json(projetos);
+  } catch (error) {
+    console.error("Erro ao buscar projetos com feedback:", error);
+    res.status(500).json({ message: "Erro ao buscar projetos com feedback" });
+  }
+};
+
+// Buscar avaliações encaminhadas para o gestor
+exports.buscarAvaliacoesEncaminhadas = async (req, res) => {
+  try {
+    const avaliacoes = await db.Avaliacao.findAll({
+      where: { encaminhadoParaGestor: true },
+      include: [
+        {
+          model: db.Projeto,
+          as: "projeto",
+          include: [
+            {
+              model: db.Usuario,
+              as: "usuario",
+              attributes: ["id", "nomeCompleto", "email", "cidade"],
+            },
+          ],
+        },
+        {
+          model: db.Usuario,
+          as: "avaliador",
+          attributes: ["id", "nomeCompleto", "email"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json(avaliacoes);
+  } catch (error) {
+    console.error("Erro ao buscar avaliações encaminhadas:", error);
+    res.status(500).json({ message: "Erro ao buscar avaliações encaminhadas" });
+>>>>>>> origin/producao1
   }
 };

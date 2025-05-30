@@ -2,11 +2,23 @@ import React, { useState, useEffect } from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 import { FileText, Video, Plus, Eye } from "lucide-react";
+=======
+import { FileText, Video, Plus, Eye, ExternalLink } from "lucide-react";
+>>>>>>> origin/producao1
 import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/panels/ProjectCard";
 import VideoPlayer from "@/components/panels/VideoPlayer";
 import { useAuth } from "@/contexts/AuthContext";
+<<<<<<< HEAD
+=======
+import {
+  buscarMeusProjetos,
+  submeterProjeto,
+  buscarProjeto,
+} from "@/servicos/jovem";
+>>>>>>> origin/producao1
 import jovemService from "@/servicos/jovem";
 import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
 import VideoRecorder from "@/components/VideoRecorder";
@@ -23,6 +35,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+<<<<<<< HEAD
+=======
+import FeedbackModal from "@/components/panels/FeedbackModal";
+>>>>>>> origin/producao1
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -33,6 +49,25 @@ interface SubmissionProject {
   hasFeedback: boolean;
   status: string; // e.g., "avaliado", "em avaliação"
   date: string;
+<<<<<<< HEAD
+=======
+  tecnologias?: string[];
+  descricao?: string;
+  linkRepositorio?: string;
+  linkDeploy?: string;
+}
+
+interface ProjetoDetalhe {
+  id: number;
+  titulo: string;
+  descricao: string;
+  tecnologias: string[];
+  linkRepositorio?: string;
+  linkDeploy?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+>>>>>>> origin/producao1
 }
 
 interface VideoSubmissionDetails {
@@ -55,6 +90,12 @@ const TalentSubmissions = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = useState(false);
+<<<<<<< HEAD
+=======
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] =
+    useState<SubmissionProject | null>(null);
+>>>>>>> origin/producao1
   const [newProject, setNewProject] = useState({
     titulo: "",
     descricao: "",
@@ -63,15 +104,71 @@ const TalentSubmissions = () => {
     linkDeploy: "",
   });
 
+<<<<<<< HEAD
+=======
+  // Adicionar novos estados para o feedback
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [selectedProjectForFeedback, setSelectedProjectForFeedback] =
+    useState<SubmissionProject | null>(null);
+  const [feedbackData, setFeedbackData] = useState<{
+    avaliacoes: any[];
+    feedbacks: any[];
+  }>({
+    avaliacoes: [],
+    feedbacks: [],
+  });
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+
+  // Função para recarregar a lista de projetos
+  const recarregarProjetos = async () => {
+    try {
+      console.log("Recarregando projetos...");
+      const projetosData = await buscarMeusProjetos();
+      console.log("Projetos recarregados:", projetosData);
+
+      if (projetosData && Array.isArray(projetosData)) {
+        const projetosMapeados = projetosData.map((projeto) => ({
+          id: projeto.id.toString(),
+          title: projeto.titulo,
+          image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
+          medalType: projeto.avaliacao?.medalha || null,
+          hasFeedback: projeto.feedback ? true : false,
+          status: projeto.status,
+          date: new Date(projeto.createdAt || Date.now()).toLocaleDateString(),
+          tecnologias: projeto.tecnologias,
+          descricao: projeto.descricao,
+          linkRepositorio: projeto.linkRepositorio,
+          linkDeploy: projeto.linkDeploy,
+        }));
+        setProjects(projetosMapeados);
+      } else {
+        console.log(
+          "Não foram encontrados projetos ou o formato é inválido após recarregamento"
+        );
+        setProjects([]);
+      }
+    } catch (error) {
+      console.error("Erro ao recarregar projetos:", error);
+    }
+  };
+
+>>>>>>> origin/producao1
   // useEffect to fetch data
   useEffect(() => {
     const fetchSubmissionsData = async () => {
       try {
         // Buscar projetos do usuário
+<<<<<<< HEAD
         const projetosData = await jovemService.buscarMeusProjetos();
         console.log("Projetos carregados:", projetosData);
 
         if (projetosData && projetosData.length > 0) {
+=======
+        const projetosData = await buscarMeusProjetos();
+        console.log("Projetos carregados:", projetosData);
+
+        if (projetosData && Array.isArray(projetosData)) {
+>>>>>>> origin/producao1
           // Mapear projetos para o formato esperado
           const projetosMapeados = projetosData.map((projeto) => ({
             id: projeto.id.toString(),
@@ -84,28 +181,104 @@ const TalentSubmissions = () => {
             date: new Date(
               projeto.createdAt || Date.now()
             ).toLocaleDateString(),
+<<<<<<< HEAD
           }));
           setProjects(projetosMapeados);
+=======
+            tecnologias: projeto.tecnologias,
+            descricao: projeto.descricao,
+            linkRepositorio: projeto.linkRepositorio,
+            linkDeploy: projeto.linkDeploy,
+          }));
+          setProjects(projetosMapeados);
+        } else {
+          console.log(
+            "Não foram encontrados projetos ou o formato é inválido:",
+            projetosData
+          );
+          setProjects([]);
+>>>>>>> origin/producao1
         }
 
         // Buscar informações do vídeo (quando disponível)
         // Por enquanto, deixamos o placeholder
       } catch (error) {
         console.error("Erro ao carregar dados de submissões:", error);
+<<<<<<< HEAD
+=======
+        setProjects([]);
+>>>>>>> origin/producao1
       }
     };
 
     if (user) {
+<<<<<<< HEAD
+=======
+      console.log("Carregando projetos do usuário:", user);
+>>>>>>> origin/producao1
       fetchSubmissionsData();
     }
   }, [user]);
 
   const handleViewDetails = (id: string) => {
     console.log("View details", id);
+<<<<<<< HEAD
   };
 
   const handleViewFeedback = (id: string) => {
     console.log("View feedback", id);
+=======
+    // Encontrar o projeto selecionado
+    const projeto = projects.find((p) => p.id === id);
+    if (projeto) {
+      setSelectedProject(projeto);
+      setIsDetailsDialogOpen(true);
+    }
+  };
+
+  const handleViewFeedback = async (projectId: string) => {
+    try {
+      console.log(
+        `Iniciando busca de feedback para o projeto ID: ${projectId}`
+      );
+      setLoadingFeedback(true);
+      setIsFeedbackModalOpen(true);
+
+      // Encontrar o projeto selecionado
+      const project = projects.find((p) => p.id === projectId);
+      if (project) {
+        console.log(`Projeto encontrado localmente: ${project.title}`);
+        setSelectedProjectForFeedback(project);
+      } else {
+        console.log(`Projeto não encontrado localmente para ID: ${projectId}`);
+      }
+
+      // Buscar os feedbacks da API usando o método do serviço
+      console.log(
+        `Chamando API para buscar feedback do projeto ID: ${projectId}`
+      );
+      const feedbacksData = await jovemService.buscarFeedbackProjeto(
+        parseInt(projectId)
+      );
+
+      console.log(`Feedback recebido:`, feedbacksData);
+      setFeedbackData(feedbacksData);
+    } catch (error: any) {
+      console.error("Erro ao carregar feedbacks:", error);
+
+      // Mensagem de erro mais informativa
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Não foi possível carregar os feedbacks";
+      toast.error(`Erro: ${errorMessage}. Tente novamente.`);
+
+      // Fechamos o modal em caso de erro
+      setIsFeedbackModalOpen(false);
+    } finally {
+      setLoadingFeedback(false);
+    }
+>>>>>>> origin/producao1
   };
 
   const handleUploadVideo = () => {
@@ -159,6 +332,7 @@ const TalentSubmissions = () => {
         return;
       }
 
+<<<<<<< HEAD
       setIsUploading(true);
 
       // Preparar os dados para envio
@@ -166,6 +340,28 @@ const TalentSubmissions = () => {
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
+=======
+      // Validação mais robusta de tecnologias
+      const tecnologiasArray = newProject.tecnologias
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0)
+        .map((tag) => tag.toLowerCase());
+
+      // Validar campos obrigatórios
+      if (!newProject.titulo || !newProject.descricao) {
+        toast.error("Título e descrição são obrigatórios");
+        return;
+      }
+
+      // Limitar número de tecnologias
+      if (tecnologiasArray.length > 10) {
+        toast.error("Máximo de 10 tecnologias permitidas");
+        return;
+      }
+
+      setIsUploading(true);
+>>>>>>> origin/producao1
 
       // Criar FormData para enviar o arquivo
       const formData = new FormData();
@@ -175,10 +371,15 @@ const TalentSubmissions = () => {
       formData.append("tecnologias", JSON.stringify(tecnologiasArray));
 
       if (newProject.linkRepositorio) {
+<<<<<<< HEAD
+=======
+        // Validação básica de URL removida
+>>>>>>> origin/producao1
         formData.append("linkRepositorio", newProject.linkRepositorio);
       }
 
       if (newProject.linkDeploy) {
+<<<<<<< HEAD
         formData.append("linkDeploy", newProject.linkDeploy);
       }
 
@@ -224,6 +425,58 @@ const TalentSubmissions = () => {
     } catch (error) {
       console.error("Erro ao enviar projeto:", error);
       toast.error("Erro ao enviar projeto. Tente novamente.");
+=======
+        // Validação de URL de deploy removida
+        formData.append("linkDeploy", newProject.linkDeploy);
+      }
+
+      // Enviar projeto para a API com tratamento de erros detalhado
+      try {
+        const response = await submeterProjeto({
+          titulo: newProject.titulo,
+          descricao: newProject.descricao,
+          tecnologias: tecnologiasArray,
+          linkRepositorio: newProject.linkRepositorio || undefined,
+          linkDeploy: newProject.linkDeploy || undefined,
+        });
+
+        toast.success("Projeto enviado com sucesso!");
+
+        // Limpar formulário e fechar diálogo
+        setSelectedFile(null);
+        setNewProject({
+          titulo: "",
+          descricao: "",
+          tecnologias: "",
+          linkRepositorio: "",
+          linkDeploy: "",
+        });
+        setIsSubmissionDialogOpen(false);
+
+        // Recarregar a lista de projetos
+        await recarregarProjetos();
+      } catch (apiError) {
+        console.error("Erro detalhado na API:", apiError);
+
+        // Tratamento de erros específicos da API
+        if (apiError.response) {
+          const errorDetails = apiError.response.data;
+          if (errorDetails.errors && Array.isArray(errorDetails.errors)) {
+            const errorMessages = errorDetails.errors
+              .map((err) => err.message)
+              .join(", ");
+            toast.error(`Erro na submissão: ${errorMessages}`);
+          } else {
+            toast.error(errorDetails.message || "Erro ao enviar projeto");
+          }
+        } else {
+          toast.error("Erro de conexão. Verifique sua internet.");
+        }
+      }
+    } catch (error) {
+      console.error("Erro inesperado:", error);
+      toast.error("Erro inesperado ao processar o projeto");
+>>>>>>> origin/producao1
     } finally {
       setIsUploading(false);
     }
@@ -432,6 +685,134 @@ const TalentSubmissions = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+<<<<<<< HEAD
+=======
+
+      {/* Diálogo para visualizar detalhes do projeto */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{selectedProject?.title}</DialogTitle>
+            <DialogDescription>Detalhes do projeto</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">Descrição</h4>
+              <p className="text-sm text-muted-foreground">
+                {selectedProject?.descricao || "Sem descrição disponível"}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Tecnologias</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedProject?.tecnologias &&
+                selectedProject.tecnologias.length > 0 ? (
+                  selectedProject.tecnologias.map((tech, index) => (
+                    <Badge key={index} variant="secondary">
+                      {tech}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Nenhuma tecnologia especificada
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {selectedProject?.linkRepositorio && (
+              <div className="space-y-2">
+                <h4 className="font-medium">Link do Repositório</h4>
+                <a
+                  href={selectedProject.linkRepositorio}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline flex items-center"
+                >
+                  {selectedProject.linkRepositorio}
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              </div>
+            )}
+
+            {selectedProject?.linkDeploy && (
+              <div className="space-y-2">
+                <h4 className="font-medium">Link de Demonstração</h4>
+                <a
+                  href={selectedProject.linkDeploy}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:underline flex items-center"
+                >
+                  {selectedProject.linkDeploy}
+                  <ExternalLink className="ml-1 h-3 w-3" />
+                </a>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Status</h4>
+              <Badge
+                variant={
+                  selectedProject?.status === "pendente"
+                    ? "outline"
+                    : selectedProject?.status === "avaliado"
+                    ? "secondary"
+                    : "default"
+                }
+              >
+                {selectedProject?.status === "pendente"
+                  ? "Aguardando avaliação"
+                  : selectedProject?.status === "avaliado"
+                  ? "Avaliado"
+                  : selectedProject?.status === "destacado"
+                  ? "Destacado"
+                  : selectedProject?.status}
+              </Badge>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-medium">Data de Submissão</h4>
+              <p className="text-sm text-muted-foreground">
+                {selectedProject?.date}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDetailsDialogOpen(false)}
+            >
+              Fechar
+            </Button>
+            {selectedProject?.linkRepositorio && (
+              <Button
+                onClick={() =>
+                  window.open(selectedProject.linkRepositorio, "_blank")
+                }
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Visitar Repositório
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Feedbacks */}
+      {selectedProjectForFeedback && (
+        <FeedbackModal
+          open={isFeedbackModalOpen}
+          onOpenChange={setIsFeedbackModalOpen}
+          projetoId={selectedProjectForFeedback.id}
+          projetoTitulo={selectedProjectForFeedback.title}
+          avaliacoes={feedbackData.avaliacoes}
+          feedbacks={feedbackData.feedbacks}
+          isLoading={loadingFeedback}
+        />
+      )}
+>>>>>>> origin/producao1
     </UserPanelLayout>
   );
 };

@@ -28,7 +28,20 @@ const feedbackValidation = [
 
 // Rotas para projetos
 router.get("/projetos/destacados", gestorController.buscarProjetosDestacados);
+<<<<<<< HEAD
 router.get("/projetos/:id", gestorController.buscarProjetoDestacado);
+=======
+router.get("/projetos/avaliados", gestorController.buscarProjetosAvaliados);
+router.get(
+  "/projetos/com-feedback",
+  gestorController.buscarProjetosComFeedback
+);
+router.get(
+  "/avaliacoes/encaminhadas",
+  gestorController.buscarAvaliacoesEncaminhadas
+);
+
+>>>>>>> origin/producao1
 router.post(
   "/projetos/:projetoId/feedback",
   feedbackValidation,
@@ -65,4 +78,10 @@ router.get("/explorar", gestorController.explorarTalentos);
 // Rota para favoritos
 router.get("/favoritos", gestorController.buscarFavoritos);
 
+<<<<<<< HEAD
+=======
+// Rota para perfil
+router.put("/perfil", gestorController.atualizarPerfil);
+
+>>>>>>> origin/producao1
 module.exports = router;

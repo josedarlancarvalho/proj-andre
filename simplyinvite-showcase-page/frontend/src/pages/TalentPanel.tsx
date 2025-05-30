@@ -11,7 +11,11 @@ import { Plus, FileVideo, Medal, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
 import { getMeuPerfil } from "@/servicos/usuario"; // Importar o serviço para obter dados do perfil
+<<<<<<< HEAD
 import jovemService from "@/servicos/jovem"; // Importar o serviço completo do jovem
+=======
+import { buscarMeusProjetos, buscarFeedbacks } from "@/servicos/jovem"; // Importar serviços do jovem
+>>>>>>> origin/producao1
 import VideoRecorder from "@/components/VideoRecorder";
 import { toast } from "sonner";
 
@@ -105,7 +109,11 @@ const TalentPanel = () => {
 
         // Obter projetos do usuário
         try {
+<<<<<<< HEAD
           const projetosData = await jovemService.buscarMeusProjetos();
+=======
+          const projetosData = await buscarMeusProjetos();
+>>>>>>> origin/producao1
           console.log("Projetos carregados:", projetosData);
 
           // Mapear projetos para o formato esperado
@@ -130,7 +138,11 @@ const TalentPanel = () => {
 
         // Obter feedbacks - em uma chamada separada para não bloquear tudo se uma falhar
         try {
+<<<<<<< HEAD
           const feedbacksData = await jovemService.buscarFeedbacks();
+=======
+          const feedbacksData = await buscarFeedbacks();
+>>>>>>> origin/producao1
           console.log("Feedbacks carregados:", feedbacksData);
 
           // Mapear feedbacks para o formato esperado

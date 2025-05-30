@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/producao1
 import React from "react";
 import { 
   Card, 
@@ -9,7 +12,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+<<<<<<< HEAD
 import { Video, Eye, MessageSquare } from "lucide-react";
+=======
+import { Video, Eye, MessageSquare, Check } from "lucide-react";
+>>>>>>> origin/producao1
 
 interface ProjectCardProps {
   title: string;
@@ -19,6 +26,11 @@ interface ProjectCardProps {
   onViewDetails?: () => void;
   onViewFeedback?: () => void;
   userType: "talent" | "hr" | "manager";
+<<<<<<< HEAD
+=======
+  isEvaluated?: boolean;
+  onEvaluate?: () => void;
+>>>>>>> origin/producao1
 }
 
 const ProjectCard = ({
@@ -28,7 +40,13 @@ const ProjectCard = ({
   hasFeedback,
   onViewDetails,
   onViewFeedback,
+<<<<<<< HEAD
   userType
+=======
+  userType,
+  isEvaluated = false,
+  onEvaluate
+>>>>>>> origin/producao1
 }: ProjectCardProps) => {
   
   const getMedalColor = () => {
@@ -115,10 +133,25 @@ const ProjectCard = ({
         {userType === "hr" && (
           <Button 
             size="sm" 
+<<<<<<< HEAD
             onClick={onViewDetails}
             className="flex-1"
           >
             Avaliar
+=======
+            onClick={onEvaluate || onViewDetails}
+            className="flex-1"
+            variant={isEvaluated ? "outline" : "default"}
+          >
+            {isEvaluated ? (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Avaliado
+              </>
+            ) : (
+              "Avaliar"
+            )}
+>>>>>>> origin/producao1
           </Button>
         )}
         

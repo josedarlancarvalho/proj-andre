@@ -60,6 +60,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     user &&
     !user.onboardingCompleto;
 
+<<<<<<< HEAD
+=======
+  // Verifica se o usuário do tipo Gestor precisa completar o onboarding
+  const needsOnboardingGestor =
+    profileType === "gestor" &&
+    requiredProfileType === "gestor" &&
+    user &&
+    !user.onboardingCompleto;
+
+>>>>>>> origin/producao1
   // Se o usuário jovem precisa de onboarding e não está na rota de onboarding, redireciona para lá
   if (needsOnboardingJovem && location.pathname !== "/jovem/onboarding") {
     console.log(
@@ -74,6 +84,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/rh/onboarding" replace />;
   }
 
+<<<<<<< HEAD
+=======
+  // Se o usuário Gestor precisa de onboarding e não está na rota de onboarding, redireciona para lá
+  if (needsOnboardingGestor && location.pathname !== "/gestor/onboarding") {
+    console.log(
+      "Usuário Gestor precisa completar onboarding, redirecionando..."
+    );
+    return <Navigate to="/gestor/onboarding" replace />;
+  }
+
+>>>>>>> origin/producao1
   return <>{children}</>;
 };
 

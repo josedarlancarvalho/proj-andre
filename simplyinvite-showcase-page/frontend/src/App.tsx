@@ -26,6 +26,10 @@ import HRProfile from "@/pages/hr/HRProfile";
 // Páginas de onboarding
 import TalentOnboardingForm from "@/pages/talent/TalentOnboardingForm";
 import TalentOnboardingFormHr from "@/pages/hr/TalentOnboardingFormHr";
+<<<<<<< HEAD
+=======
+import ManagerOnboardingForm from "@/pages/manager/ManagerOnboardingForm";
+>>>>>>> origin/producao1
 
 // Páginas de submissões
 import TalentSubmissions from "@/pages/talent/TalentSubmissions";
@@ -235,6 +239,17 @@ const App = () => {
             }
           />
           <Route
+<<<<<<< HEAD
+=======
+            path="/gestor/onboarding"
+            element={
+              <ProtectedRoute requiredProfileType="gestor">
+                <ManagerOnboardingForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+>>>>>>> origin/producao1
             path="/gestor/explorar"
             element={
               <ProtectedRoute requiredProfileType="gestor">

@@ -4,7 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StatCard from "@/components/panels/StatCard";
 import { Clock, Eye, Calendar, Medal } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+<<<<<<< HEAD
 import jovemService from "@/servicos/jovem";
+=======
+import {
+  buscarMeusProjetos,
+  buscarFeedbacks,
+  buscarConvites,
+} from "@/servicos/jovem";
+>>>>>>> origin/producao1
 
 interface TimelineEvent {
   id: string;
@@ -49,7 +57,11 @@ const TalentProgress = () => {
 
           // Buscar projetos, feedbacks e convites
           try {
+<<<<<<< HEAD
             const projetos = await jovemService.buscarMeusProjetos();
+=======
+            const projetos = await buscarMeusProjetos();
+>>>>>>> origin/producao1
             const totalProjetos = projetos?.length || 0;
 
             // Adicionar evento para o primeiro projeto, se existir
@@ -104,7 +116,11 @@ const TalentProgress = () => {
             }
 
             // Buscar convites
+<<<<<<< HEAD
             const convites = await jovemService.buscarConvites();
+=======
+            const convites = await buscarConvites();
+>>>>>>> origin/producao1
             const totalConvites = convites?.length || 0;
 
             // Atualizar estatísticas

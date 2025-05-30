@@ -15,4 +15,48 @@ const models = {
   Convite: ConviteModel(sequelize),
 };
 
+<<<<<<< HEAD
+=======
+// Definir relações entre modelos
+models.Usuario.hasMany(models.Projeto, {
+  foreignKey: "usuarioId",
+  as: "projetos",
+});
+
+models.Projeto.belongsTo(models.Usuario, {
+  foreignKey: "usuarioId",
+  as: "usuario",
+});
+
+models.Projeto.hasMany(models.Avaliacao, {
+  foreignKey: "projetoId",
+  as: "avaliacoes",
+});
+
+models.Avaliacao.belongsTo(models.Projeto, {
+  foreignKey: "projetoId",
+  as: "projeto",
+});
+
+models.Avaliacao.belongsTo(models.Usuario, {
+  foreignKey: "avaliadorId",
+  as: "avaliador",
+});
+
+models.Projeto.hasMany(models.Feedback, {
+  foreignKey: "projetoId",
+  as: "feedbacks",
+});
+
+models.Feedback.belongsTo(models.Projeto, {
+  foreignKey: "projetoId",
+  as: "projeto",
+});
+
+models.Feedback.belongsTo(models.Usuario, {
+  foreignKey: "gestorId",
+  as: "gestor",
+});
+
+>>>>>>> origin/producao1
 module.exports = models;
