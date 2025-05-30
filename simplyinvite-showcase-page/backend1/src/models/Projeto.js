@@ -65,9 +65,10 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      linkDeploy: {
+      linkYoutube: {
         type: DataTypes.STRING,
         allowNull: true,
+        comment: "Link do vídeo do YouTube explicando o projeto",
       },
       arquivoUrl: {
         type: DataTypes.STRING,

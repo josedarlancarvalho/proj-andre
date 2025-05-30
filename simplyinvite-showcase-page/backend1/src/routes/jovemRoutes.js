@@ -53,6 +53,10 @@ const projetoValidation = [
     .optional()
     .isURL()
     .withMessage("Link do repositório inválido"),
+  body("linkYoutube")
+    .optional()
+    .matches(/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/)
+    .withMessage("Link do YouTube inválido"),
   body("linkDeploy").optional().isURL().withMessage("Link do deploy inválido"),
 ];
 

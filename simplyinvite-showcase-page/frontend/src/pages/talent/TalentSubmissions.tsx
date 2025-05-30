@@ -2,20 +2,16 @@ import React, { useState, useEffect } from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Video, Plus, Eye, ExternalLink } from "lucide-react";
+import { FileText, Plus, Eye, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/panels/ProjectCard";
-import VideoPlayer from "@/components/panels/VideoPlayer";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   buscarMeusProjetos,
   submeterProjeto,
-  buscarProjeto,
 } from "@/servicos/jovem";
 import jovemService from "@/servicos/jovem";
 import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
-import VideoRecorder from "@/components/VideoRecorder";
-import FileUploader from "@/components/FileUploader";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -42,7 +38,7 @@ interface SubmissionProject {
   tecnologias?: string[];
   descricao?: string;
   linkRepositorio?: string;
-  linkDeploy?: string;
+  linkYoutube?: string;
 }
 
 interface ProjetoDetalhe {
@@ -51,31 +47,19 @@ interface ProjetoDetalhe {
   descricao: string;
   tecnologias: string[];
   linkRepositorio?: string;
-  linkDeploy?: string;
+  linkYoutube?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface VideoSubmissionDetails {
-  title: string;
-  videoUrl: string;
-}
-
 const TalentSubmissions = () => {
-  const { user, profileType } = useAuth(); // Usando o contexto de autenticação
+  const { user, profileType } = useAuth();
   const componentUserType = profileType
     ? mapAuthToComponentType(profileType)
     : "talent";
-  // State for dynamic data
   const [projects, setProjects] = useState<SubmissionProject[]>([]);
-  const [videoDetails, setVideoDetails] = useState<VideoSubmissionDetails>({
-    title: "Seu Vídeo de Apresentação",
-    videoUrl: "", // Initialize with empty or placeholder URL
-  });
-  const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmissionDialogOpen, setIsSubmissionDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] =
@@ -85,7 +69,7 @@ const TalentSubmissions = () => {
     descricao: "",
     tecnologias: "",
     linkRepositorio: "",
-    linkDeploy: "",
+    linkYoutube: "",
   });
 
   // Adicionar novos estados para o feedback
@@ -105,7 +89,7 @@ const TalentSubmissions = () => {
   const recarregarProjetos = async () => {
     try {
       console.log("Recarregando projetos...");
-      const projetosData = await buscarMeusProjetos();
+      const projetosData = await jovemService.buscarMeusProjetos();
       console.log("Projetos recarregados:", projetosData);
 
       if (projetosData && Array.isArray(projetosData)) {
@@ -113,14 +97,14 @@ const TalentSubmissions = () => {
           id: projeto.id.toString(),
           title: projeto.titulo,
           image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-          medalType: projeto.avaliacao?.medalha || null,
-          hasFeedback: projeto.feedback ? true : false,
+          medalType: (projeto as any).avaliacao?.medalha || null,
+          hasFeedback: (projeto as any).feedback ? true : false,
           status: projeto.status,
-          date: new Date(projeto.createdAt || Date.now()).toLocaleDateString(),
+          date: new Date((projeto as any).createdAt || Date.now()).toLocaleDateString(),
           tecnologias: projeto.tecnologias,
           descricao: projeto.descricao,
           linkRepositorio: projeto.linkRepositorio,
-          linkDeploy: projeto.linkDeploy,
+          linkYoutube: projeto.linkYoutube,
         }));
         setProjects(projetosMapeados);
       } else {
@@ -139,7 +123,7 @@ const TalentSubmissions = () => {
     const fetchSubmissionsData = async () => {
       try {
         // Buscar projetos do usuário
-        const projetosData = await buscarMeusProjetos();
+        const projetosData = await jovemService.buscarMeusProjetos();
         console.log("Projetos carregados:", projetosData);
 
         if (projetosData && Array.isArray(projetosData)) {
@@ -149,16 +133,16 @@ const TalentSubmissions = () => {
             title: projeto.titulo,
             image:
               "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b", // Imagem temporária
-            medalType: projeto.avaliacao?.medalha || null,
-            hasFeedback: projeto.feedback ? true : false,
+            medalType: (projeto as any).avaliacao?.medalha || null,
+            hasFeedback: (projeto as any).feedback ? true : false,
             status: projeto.status,
             date: new Date(
-              projeto.createdAt || Date.now()
+              (projeto as any).createdAt || Date.now() // Acessar createdAt via any temporariamente
             ).toLocaleDateString(),
             tecnologias: projeto.tecnologias,
             descricao: projeto.descricao,
             linkRepositorio: projeto.linkRepositorio,
-            linkDeploy: projeto.linkDeploy,
+            linkYoutube: projeto.linkYoutube,
           }));
           setProjects(projetosMapeados);
         } else {
@@ -170,7 +154,6 @@ const TalentSubmissions = () => {
         }
 
         // Buscar informações do vídeo (quando disponível)
-        // Por enquanto, deixamos o placeholder
       } catch (error) {
         console.error("Erro ao carregar dados de submissões:", error);
         setProjects([]);
@@ -237,57 +220,22 @@ const TalentSubmissions = () => {
     }
   };
 
-  const handleUploadVideo = () => {
-    setIsRecording(true);
-  };
-
-  const handleCancelRecording = () => {
-    setIsRecording(false);
-  };
-
-  const handleSaveVideo = async (videoBlob: Blob) => {
-    try {
-      setIsUploading(true);
-
-      // Criar um FormData para enviar o vídeo
-      const formData = new FormData();
-      formData.append("video", videoBlob, "recorded-video.webm");
-
-      // Simulando um delay de upload
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Atualizar a URL do vídeo (em produção, isso viria da resposta do servidor)
-      const videoUrl = URL.createObjectURL(videoBlob);
-      setVideoDetails({
-        title: "Seu Vídeo de Apresentação",
-        videoUrl: videoUrl,
-      });
-
-      setIsRecording(false);
-      toast.success("Vídeo salvo com sucesso!");
-    } catch (error) {
-      console.error("Erro ao salvar vídeo:", error);
-      toast.error("Erro ao salvar o vídeo. Tente novamente.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const handleUploadProject = () => {
     setIsSubmissionDialogOpen(true);
   };
 
-  const handleFileSelect = (file: File) => {
-    setSelectedFile(file);
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setNewProject((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleProjectSubmit = async () => {
     try {
-      if (!selectedFile) {
-        toast.error("Por favor, selecione um arquivo para enviar");
-        return;
-      }
-
       // Validação mais robusta de tecnologias
       const tecnologiasArray = newProject.tecnologias
         .split(",")
@@ -309,23 +257,6 @@ const TalentSubmissions = () => {
 
       setIsUploading(true);
 
-      // Criar FormData para enviar o arquivo
-      const formData = new FormData();
-      formData.append("arquivo", selectedFile);
-      formData.append("titulo", newProject.titulo);
-      formData.append("descricao", newProject.descricao);
-      formData.append("tecnologias", JSON.stringify(tecnologiasArray));
-
-      if (newProject.linkRepositorio) {
-        // Validação básica de URL removida
-        formData.append("linkRepositorio", newProject.linkRepositorio);
-      }
-
-      if (newProject.linkDeploy) {
-        // Validação de URL de deploy removida
-        formData.append("linkDeploy", newProject.linkDeploy);
-      }
-
       // Enviar projeto para a API com tratamento de erros detalhado
       try {
         const response = await submeterProjeto({
@@ -333,25 +264,24 @@ const TalentSubmissions = () => {
           descricao: newProject.descricao,
           tecnologias: tecnologiasArray,
           linkRepositorio: newProject.linkRepositorio || undefined,
-          linkDeploy: newProject.linkDeploy || undefined,
+          linkYoutube: newProject.linkYoutube || undefined,
         });
 
         toast.success("Projeto enviado com sucesso!");
 
         // Limpar formulário e fechar diálogo
-        setSelectedFile(null);
         setNewProject({
           titulo: "",
           descricao: "",
           tecnologias: "",
           linkRepositorio: "",
-          linkDeploy: "",
+          linkYoutube: "",
         });
         setIsSubmissionDialogOpen(false);
 
         // Recarregar a lista de projetos
         await recarregarProjetos();
-      } catch (apiError) {
+      } catch (apiError: any) {
         console.error("Erro detalhado na API:", apiError);
 
         // Tratamento de erros específicos da API
@@ -359,7 +289,7 @@ const TalentSubmissions = () => {
           const errorDetails = apiError.response.data;
           if (errorDetails.errors && Array.isArray(errorDetails.errors)) {
             const errorMessages = errorDetails.errors
-              .map((err) => err.message)
+              .map((err: any) => err.message)
               .join(", ");
             toast.error(`Erro na submissão: ${errorMessages}`);
           } else {
@@ -377,50 +307,12 @@ const TalentSubmissions = () => {
     }
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewProject((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   return (
     <UserPanelLayout userType="jovem">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Meus Envios</h1>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{videoDetails.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isRecording ? (
-              <VideoRecorder
-                onSave={handleSaveVideo}
-                onCancel={handleCancelRecording}
-              />
-            ) : (
-              <>
-                <VideoPlayer
-                  title={videoDetails.title}
-                  videoUrl={videoDetails.videoUrl}
-                  onRecord={handleUploadVideo}
-                />
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={handleUploadVideo} disabled={isUploading}>
-                    <Video className="mr-2 h-4 w-4" />
-                    {isUploading ? "Salvando..." : "Gravar Vídeo"}
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -451,34 +343,6 @@ const TalentSubmissions = () => {
                   para começar.
                 </p>
               )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Enviar Novo Projeto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FileUploader
-              onFileSelect={handleFileSelect}
-              maxSizeMB={20}
-              allowedFileTypes={[
-                ".pdf",
-                ".ppt",
-                ".pptx",
-                ".doc",
-                ".docx",
-                ".zip",
-              ]}
-              title="Arraste seu projeto ou clique para enviar"
-              description="Suporta arquivos PDF, PPT, DOC ou ZIP"
-            />
-            <div className="mt-4 flex justify-end">
-              <Button onClick={handleUploadProject} disabled={!selectedFile}>
-                <Plus className="mr-2 h-4 w-4" />
-                Continuar Envio
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -543,15 +407,15 @@ const TalentSubmissions = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="linkDeploy">
-                Link de Demonstração (opcional)
+              <Label htmlFor="linkYoutube">
+                Link do YouTube (opcional)
               </Label>
               <Input
-                id="linkDeploy"
-                name="linkDeploy"
-                value={newProject.linkDeploy}
+                id="linkYoutube"
+                name="linkYoutube"
+                value={newProject.linkYoutube}
                 onChange={handleInputChange}
-                placeholder="Ex: https://seu-projeto.vercel.app"
+                placeholder="Ex: https://youtube.com/watch?v=..."
               />
             </div>
           </div>
@@ -629,16 +493,16 @@ const TalentSubmissions = () => {
               </div>
             )}
 
-            {selectedProject?.linkDeploy && (
+            {selectedProject?.linkYoutube && (
               <div className="space-y-2">
-                <h4 className="font-medium">Link de Demonstração</h4>
+                <h4 className="font-medium">Link do YouTube</h4>
                 <a
-                  href={selectedProject.linkDeploy}
+                  href={selectedProject.linkYoutube}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:underline flex items-center"
                 >
-                  {selectedProject.linkDeploy}
+                  {selectedProject.linkYoutube}
                   <ExternalLink className="ml-1 h-3 w-3" />
                 </a>
               </div>

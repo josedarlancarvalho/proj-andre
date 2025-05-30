@@ -6,9 +6,9 @@ export interface Projeto {
   descricao: string;
   tecnologias: string[];
   linkRepositorio?: string;
-  linkDeploy?: string;
+  linkYoutube?: string;
   status: "pendente" | "avaliado" | "destacado";
-  usuarioId: number;
+  usuarioId?: number;
 }
 
 export interface Feedback {
@@ -96,7 +96,14 @@ export async function submeterProjeto(projeto: Omit<Projeto, "id" | "status">) {
       throw new Error("Máximo de 10 tecnologias permitidas");
     }
 
-    // Certifique-se de que a URL não tenha prefixo duplicado
+    // Validar link do YouTube se fornecido
+    if (projeto.linkYoutube) {
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+      if (!youtubeRegex.test(projeto.linkYoutube)) {
+        throw new Error("Link do YouTube inválido");
+      }
+    }
+
     const response = await api.post("jovem/projetos", projeto);
     console.log("Projeto submetido com sucesso:", response.data);
     return response.data;

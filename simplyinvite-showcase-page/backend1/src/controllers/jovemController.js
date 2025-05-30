@@ -3,8 +3,7 @@ const { Op } = require("sequelize");
 
 // Criar novo projeto
 exports.criarProjeto = async (req, res) => {
-  let { titulo, descricao, tecnologias, linkRepositorio, linkDeploy } =
-    req.body;
+  let { titulo, descricao, tecnologias, linkRepositorio, linkYoutube } = req.body;
   try {
     console.log(`Tentando criar projeto para usuário ID: ${req.usuario?.id}`);
     console.log(`Dados recebidos: ${JSON.stringify(req.body)}`);
@@ -36,6 +35,17 @@ exports.criarProjeto = async (req, res) => {
         field: "descricao",
         message: "Descrição deve ter no máximo 1000 caracteres",
       });
+    }
+
+    // Validar link do YouTube
+    if (linkYoutube) {
+      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+      if (!youtubeRegex.test(linkYoutube)) {
+        errors.push({
+          field: "linkYoutube",
+          message: "Link do YouTube inválido",
+        });
+      }
     }
 
     // Verificar se o usuário existe
@@ -92,9 +102,9 @@ exports.criarProjeto = async (req, res) => {
       dadosParaAtualizar.linkRepositorio = linkRepositorio;
     }
 
-    if (linkDeploy) {
+    if (linkYoutube) {
       // Apenas adicionar sem validação
-      dadosParaAtualizar.linkDeploy = linkDeploy;
+      dadosParaAtualizar.linkYoutube = linkYoutube;
     }
 
     // Se houver erros, retornar
@@ -113,7 +123,7 @@ exports.criarProjeto = async (req, res) => {
       descricao,
       tecnologias,
       linkRepositorio,
-      linkDeploy,
+      linkYoutube,
       status: "pendente",
       usuarioId: req.usuario.id,
     });
@@ -123,7 +133,7 @@ exports.criarProjeto = async (req, res) => {
       descricao,
       tecnologias,
       linkRepositorio,
-      linkDeploy,
+      linkYoutube,
       status: "pendente",
       usuarioId: req.usuario.id,
     });
@@ -194,7 +204,7 @@ exports.criarProjeto = async (req, res) => {
 // Atualizar projeto
 exports.atualizarProjeto = async (req, res) => {
   const { id } = req.params;
-  const { titulo, descricao, tecnologias, linkRepositorio, linkDeploy } =
+  const { titulo, descricao, tecnologias, linkRepositorio, linkYoutube } =
     req.body;
   try {
     const projeto = await db.Projeto.findOne({
@@ -215,7 +225,7 @@ exports.atualizarProjeto = async (req, res) => {
       descricao,
       tecnologias,
       linkRepositorio,
-      linkDeploy,
+      linkYoutube,
     });
     res.json(projeto);
   } catch (error) {
