@@ -17,9 +17,23 @@ module.exports = (sequelize) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      descricao: {
+      comentario: {
         type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      oportunidade: {
+        type: DataTypes.JSON,
         allowNull: true,
+        comment: "Detalhes da oportunidade oferecida (se houver)",
+      },
+      contatoRealizado: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        comment: "Indica se o gestor já entrou em contato com o jovem",
+      },
+      dataFeedback: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
       },
     },
     {

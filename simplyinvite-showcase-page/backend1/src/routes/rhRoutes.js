@@ -24,6 +24,8 @@ const avaliacaoValidation = [
 ];
 
 // Rotas para projetos
+router.get("/projetos/todos", rhController.buscarTodosProjetos);
+router.get("/projetos/filtrados", rhController.buscarProjetosFiltrados);
 router.get("/projetos/pendentes", rhController.buscarProjetosPendentes);
 router.get("/projetos/:id", rhController.buscarProjeto);
 
@@ -46,5 +48,8 @@ router.put("/perfil", rhController.atualizarPerfil);
 
 // Rota para estatísticas
 router.get("/estatisticas", rhController.buscarEstatisticas);
+
+// Nova rota para feedback do usuário
+router.post("/feedback/projeto/:projetoId", rhController.salvarFeedbackUsuario);
 
 module.exports = router;

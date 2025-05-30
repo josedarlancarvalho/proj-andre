@@ -83,20 +83,6 @@ exports.criarProjeto = async (req, res) => {
       });
     }
 
-    // Inicializar variável faltante
-    const dadosParaAtualizar = {};
-
-    // Remover validações de links
-    if (linkRepositorio) {
-      // Apenas adicionar sem validação
-      dadosParaAtualizar.linkRepositorio = linkRepositorio;
-    }
-
-    if (linkDeploy) {
-      // Apenas adicionar sem validação
-      dadosParaAtualizar.linkDeploy = linkDeploy;
-    }
-
     // Se houver erros, retornar
     if (errors.length > 0) {
       return res.status(400).json({
@@ -269,14 +255,25 @@ exports.buscarMeusProjetos = async (req, res) => {
       `Usuário encontrado: ${usuario.nomeCompleto} (${usuario.tipoPerfil})`
     );
 
-    // Consultar diretamente a tabela de projetos
+    // Consultar diretamente a tabela de projetos para verificar se existem registros
+    const projetosRaw = await db.Projeto.findAll({
+      where: { usuarioId },
+      raw: true,
+    });
+
+    console.log(
+      `Consulta raw de projetos retornou ${projetosRaw.length} registros:`,
+      projetosRaw.length > 0
+        ? JSON.stringify(projetosRaw)
+        : "Nenhum projeto encontrado"
+    );
+
     const projetos = await db.Projeto.findAll({
       where: { usuarioId },
       include: [
         {
           model: db.Avaliacao,
           as: "avaliacoes",
-          required: false,
           include: [
             {
               model: db.Usuario,
@@ -288,7 +285,6 @@ exports.buscarMeusProjetos = async (req, res) => {
         {
           model: db.Feedback,
           as: "feedbacks",
-          required: false,
           include: [
             {
               model: db.Usuario,
@@ -310,6 +306,21 @@ exports.buscarMeusProjetos = async (req, res) => {
       );
     } else {
       console.log("Nenhum projeto encontrado para este usuário");
+
+      // Verificar se há projetos no banco de dados para qualquer usuário
+      const todosProjetosCount = await db.Projeto.count();
+      console.log(`Total de projetos no banco de dados: ${todosProjetosCount}`);
+
+      if (todosProjetosCount > 0) {
+        const amostraProjetos = await db.Projeto.findAll({
+          limit: 2,
+          raw: true,
+        });
+        console.log(
+          `Amostra de projetos existentes:`,
+          JSON.stringify(amostraProjetos)
+        );
+      }
     }
 
     res.json(projetos);
@@ -324,22 +335,10 @@ exports.buscarMeusProjetos = async (req, res) => {
 // Buscar projeto específico
 exports.buscarProjeto = async (req, res) => {
   try {
-    const { projetoId } = req.params;
-    console.log(
-      `Buscando projeto com ID: ${projetoId} para o usuário ID: ${req.usuario.id}`
-    );
-
+    const { id } = req.params;
     const usuarioId = req.usuario.id;
-
-    // Validar que o ID é um número
-    const projetoIdInt = parseInt(projetoId, 10);
-    if (isNaN(projetoIdInt)) {
-      console.error(`ID do projeto inválido: ${projetoId}`);
-      return res.status(400).json({ message: "ID do projeto inválido" });
-    }
-
     const projeto = await db.Projeto.findOne({
-      where: { id: projetoIdInt, usuarioId },
+      where: { id: parseInt(id, 10), usuarioId },
       include: [
         {
           model: db.Avaliacao,
@@ -365,21 +364,12 @@ exports.buscarProjeto = async (req, res) => {
         },
       ],
     });
-
     if (!projeto) {
-      console.log(
-        `Projeto não encontrado para ID: ${projetoId}, usuário: ${usuarioId}`
-      );
       return res.status(404).json({ message: "Projeto não encontrado" });
     }
-
-    console.log(`Projeto encontrado: ${projeto.id}, título: ${projeto.titulo}`);
     res.json(projeto);
   } catch (error) {
-    console.error("Erro ao buscar projeto:", error);
-    res
-      .status(500)
-      .json({ message: "Erro ao buscar projeto", error: error.message });
+    res.status(500).json({ message: "Erro ao buscar projeto" });
   }
 };
 
@@ -751,98 +741,6 @@ exports.uploadVideo = async (req, res) => {
     res.status(500).json({
       message: "Erro ao fazer upload de vídeo",
       error: error.message,
-    });
-  }
-};
-
-// Buscar feedback de um projeto específico
-exports.buscarFeedbackProjeto = async (req, res) => {
-  try {
-    const { projetoId } = req.params;
-    const usuarioId = req.usuario.id;
-
-    console.log(
-      `Buscando feedback para o projeto ID: ${projetoId}, usuário ID: ${usuarioId}`
-    );
-
-    // Validar que o ID é um número
-    const projetoIdInt = parseInt(projetoId, 10);
-    if (isNaN(projetoIdInt)) {
-      console.error(`ID do projeto inválido: ${projetoId}`);
-      return res.status(400).json({ message: "ID do projeto inválido" });
-    }
-
-    // Verificar se o projeto existe primeiro (sem verificar o dono)
-    const projetoExiste = await db.Projeto.findByPk(projetoIdInt);
-    if (!projetoExiste) {
-      console.log(`Projeto não encontrado. Projeto ID: ${projetoId}`);
-      return res.status(404).json({ message: "Projeto não encontrado" });
-    }
-
-    // Verificar se o projeto pertence ao jovem
-    const projeto = await db.Projeto.findOne({
-      where: {
-        id: projetoIdInt,
-        usuarioId,
-      },
-    });
-
-    if (!projeto) {
-      console.log(
-        `Projeto ID: ${projetoId} não pertence ao usuário ID: ${usuarioId}`
-      );
-      return res
-        .status(403)
-        .json({ message: "Sem permissão para acessar este projeto" });
-    }
-
-    console.log(`Projeto encontrado: ${projeto.id}, título: ${projeto.titulo}`);
-
-    // Buscar avaliações do projeto
-    const avaliacoes = await db.Avaliacao.findAll({
-      where: { projetoId: projetoIdInt },
-      include: [
-        {
-          model: db.Usuario,
-          as: "avaliador",
-          attributes: ["id", "nomeCompleto", "tipoUsuario", "fotoPerfil"],
-        },
-      ],
-    });
-
-    console.log(
-      `Encontradas ${avaliacoes.length} avaliações para o projeto ID: ${projetoId}`
-    );
-
-    // Buscar feedbacks do projeto
-    const feedbacks = await db.Feedback.findAll({
-      where: { projetoId: projetoIdInt },
-      include: [
-        {
-          model: db.Usuario,
-          as: "gestor",
-          attributes: ["id", "nomeCompleto", "tipoUsuario", "fotoPerfil"],
-        },
-      ],
-    });
-
-    console.log(
-      `Encontrados ${feedbacks.length} feedbacks para o projeto ID: ${projetoId}`
-    );
-
-    const result = {
-      avaliacoes,
-      feedbacks,
-    };
-
-    console.log(`Retornando dados de feedback para o projeto ID: ${projetoId}`);
-    res.json(result);
-  } catch (error) {
-    console.error("Erro ao buscar feedbacks:", error);
-    res.status(500).json({
-      message: "Erro ao buscar feedbacks do projeto",
-      error: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };

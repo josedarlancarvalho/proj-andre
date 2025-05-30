@@ -4,6 +4,8 @@ const { Op, Sequelize } = require("sequelize");
 // Buscar projetos pendentes
 exports.buscarProjetosPendentes = async (req, res) => {
   try {
+    console.log("RH - Buscando projetos pendentes");
+
     const projetos = await db.Projeto.findAll({
       where: { status: "pendente" },
       include: [
@@ -15,9 +17,21 @@ exports.buscarProjetosPendentes = async (req, res) => {
       ],
       order: [["createdAt", "DESC"]],
     });
+
+    console.log(`RH - Encontrados ${projetos.length} projetos pendentes`);
+    if (projetos.length > 0) {
+      console.log(
+        `RH - Exemplo do primeiro projeto: ${JSON.stringify(projetos[0])}`
+      );
+    }
+
     res.json(projetos);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar projetos pendentes" });
+    console.error("RH - Erro ao buscar projetos pendentes:", error);
+    res.status(500).json({
+      message: "Erro ao buscar projetos pendentes",
+      error: error.message,
+    });
   }
 };
 
@@ -73,6 +87,48 @@ exports.avaliarProjeto = async (req, res) => {
     res.json(avaliacao);
   } catch (error) {
     res.status(500).json({ message: "Erro ao avaliar projeto" });
+  }
+};
+
+// Nova função para salvar feedback do usuário RH no projeto
+exports.salvarFeedbackUsuario = async (req, res) => {
+  try {
+    const { projetoId } = req.params;
+    const { feedback } = req.body;
+    const avaliadorId = req.usuario.id;
+
+    const projeto = await db.Projeto.findByPk(parseInt(projetoId, 10));
+    if (!projeto) {
+      return res.status(404).json({ message: "Projeto não encontrado" });
+    }
+
+    // Verificar se já existe uma avaliação
+    let avaliacao = await db.Avaliacao.findOne({
+      where: { projetoId: parseInt(projetoId, 10), avaliadorId },
+    });
+
+    if (avaliacao) {
+      // Atualizar avaliação existente
+      avaliacao = await avaliacao.update({
+        comentario: feedback,
+      });
+    } else {
+      // Criar nova avaliação simplificada (apenas feedback)
+      avaliacao = await db.Avaliacao.create({
+        projetoId: parseInt(projetoId, 10),
+        avaliadorId,
+        nota: 5, // Nota padrão
+        comentario: feedback,
+      });
+    }
+
+    // Atualizar o status do projeto para "avaliado"
+    await projeto.update({ status: "avaliado" });
+
+    res.json(avaliacao);
+  } catch (error) {
+    console.error("Erro ao salvar feedback:", error);
+    res.status(500).json({ message: "Erro ao salvar feedback do usuário" });
   }
 };
 
@@ -233,5 +289,140 @@ exports.atualizarPerfil = async (req, res) => {
   } catch (error) {
     console.error("Erro ao atualizar perfil do RH:", error);
     return res.status(500).json({ message: "Erro ao atualizar perfil" });
+  }
+};
+
+// Buscar todos os projetos (não apenas pendentes)
+exports.buscarTodosProjetos = async (req, res) => {
+  try {
+    console.log("RH - Buscando todos os projetos");
+
+    const projetos = await db.Projeto.findAll({
+      include: [
+        {
+          model: db.Usuario,
+          as: "usuario",
+          attributes: [
+            "id",
+            "nomeCompleto",
+            "email",
+            "cidade",
+            "formacaoCurso",
+            "formacaoInstituicao",
+          ],
+        },
+        {
+          model: db.Avaliacao,
+          as: "avaliacoes",
+          include: [
+            {
+              model: db.Usuario,
+              as: "avaliador",
+              attributes: ["id", "nomeCompleto", "email"],
+            },
+          ],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    console.log(`RH - Encontrados ${projetos.length} projetos no total`);
+    if (projetos.length > 0) {
+      console.log(
+        `RH - Exemplo do primeiro projeto: ${JSON.stringify(projetos[0])}`
+      );
+    }
+
+    res.json(projetos);
+  } catch (error) {
+    console.error("RH - Erro ao buscar todos os projetos:", error);
+    res.status(500).json({
+      message: "Erro ao buscar todos os projetos",
+      error: error.message,
+    });
+  }
+};
+
+// Buscar projetos com filtros
+exports.buscarProjetosFiltrados = async (req, res) => {
+  try {
+    const { status, tecnologia, avaliado } = req.query;
+
+    const where = {};
+
+    // Filtrar por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Filtrar por tecnologia (como é um campo JSON, precisamos usar a função JSONB_CONTAINS no PostgreSQL)
+    const include = [
+      {
+        model: db.Usuario,
+        as: "usuario",
+        attributes: [
+          "id",
+          "nomeCompleto",
+          "email",
+          "cidade",
+          "formacaoCurso",
+          "formacaoInstituicao",
+        ],
+      },
+    ];
+
+    // Incluir avaliações se solicitado
+    if (avaliado === "true") {
+      include.push({
+        model: db.Avaliacao,
+        as: "avaliacoes",
+        required: true, // INNER JOIN - projetos que possuem avaliações
+        include: [
+          {
+            model: db.Usuario,
+            as: "avaliador",
+            attributes: ["id", "nomeCompleto", "email"],
+          },
+        ],
+      });
+    } else if (avaliado === "false") {
+      where.status = "pendente"; // Projetos sem avaliação geralmente estão pendentes
+    } else {
+      // Se não especificado, inclui avaliações como LEFT JOIN
+      include.push({
+        model: db.Avaliacao,
+        as: "avaliacoes",
+        required: false,
+        include: [
+          {
+            model: db.Usuario,
+            as: "avaliador",
+            attributes: ["id", "nomeCompleto", "email"],
+          },
+        ],
+      });
+    }
+
+    const projetos = await db.Projeto.findAll({
+      where,
+      include,
+      order: [["createdAt", "DESC"]],
+    });
+
+    // Filtrar por tecnologia no JavaScript (já que não estamos usando operadores SQL específicos)
+    let result = projetos;
+    if (tecnologia) {
+      result = projetos.filter(
+        (projeto) =>
+          projeto.tecnologias &&
+          Array.isArray(projeto.tecnologias) &&
+          projeto.tecnologias.includes(tecnologia)
+      );
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("Erro ao buscar projetos filtrados:", error);
+    res.status(500).json({ message: "Erro ao buscar projetos filtrados" });
   }
 };

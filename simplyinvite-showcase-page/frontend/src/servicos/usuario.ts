@@ -46,7 +46,7 @@ export async function registrar(
   usuario: Usuario
 ): Promise<UsuarioLoginResponseDTO> {
   const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post(
-    "/auth/register",
+    "/api/auth/register",
     usuario
   );
   return response.data;
@@ -58,7 +58,7 @@ export async function login(
   tipoPerfil: "jovem" | "rh" | "gestor"
 ): Promise<UsuarioLoginResponseDTO> {
   const response: AxiosResponse<UsuarioLoginResponseDTO> = await api.post(
-    "/auth/login",
+    "/api/auth/login",
     { email, senha, tipoPerfil }
   );
   return response.data;
@@ -69,6 +69,6 @@ export async function getMeuPerfil(): Promise<{
   tipoPerfil: string;
 }> {
   const response: AxiosResponse<{ usuario: Usuario; tipoPerfil: string }> =
-    await api.get("/auth/me");
+    await api.get("/api/auth/me");
   return response.data;
 }

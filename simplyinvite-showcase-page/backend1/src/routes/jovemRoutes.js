@@ -4,12 +4,45 @@ const { authenticate } = require("../middlewares/auth");
 const { checkRole } = require("../middlewares/checkRole");
 const { validateRequest } = require("../middlewares/validateRequest");
 const { body } = require("express-validator");
+// Comentando temporariamente para permitir que o aplicativo inicie
+// const multer = require("multer");
+// const path = require("path");
 
 const router = Router();
 
 // Middleware de autenticação e verificação de papel
 router.use(authenticate);
 router.use(checkRole("jovem"));
+
+/*
+// Configuração do Multer para upload de vídeos
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../../uploads/videos"));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "video-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limite
+  fileFilter: (req, file, cb) => {
+    const filetypes = /mp4|webm|mov|avi/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error("Apenas arquivos de vídeo são permitidos"));
+  },
+});
+*/
 
 // Validações
 const projetoValidation = [
@@ -40,16 +73,30 @@ const perfilValidation = [
 ];
 
 // Rotas para projetos
+router.get("/projetos", jovemController.buscarMeusProjetos);
 router.get("/projetos/meus", jovemController.buscarMeusProjetos);
-router.get("/projetos/:id", jovemController.buscarProjeto);
+router.get("/projetos/:projetoId", jovemController.buscarProjeto);
+router.get(
+  "/projetos/:projetoId/feedback",
+  jovemController.buscarFeedbackProjeto
+);
 router.post(
   "/projetos",
   projetoValidation,
   validateRequest,
   jovemController.criarProjeto
 );
+
+/* Comentando temporariamente
+router.post(
+  "/projetos/:projetoId/video",
+  upload.single("video"),
+  jovemController.uploadVideo
+);
+*/
+
 router.put(
-  "/projetos/:id",
+  "/projetos/:projetoId",
   projetoValidation,
   validateRequest,
   jovemController.atualizarProjeto

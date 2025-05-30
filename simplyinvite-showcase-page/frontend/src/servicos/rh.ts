@@ -15,6 +15,8 @@ interface Projeto {
     nomeCompleto: string;
     email: string;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Avaliacao {
@@ -64,8 +66,32 @@ export async function completarOnboardingRh(dados: {
 const rhService = {
   // Projetos
   buscarProjetosPendentes: async (): Promise<Projeto[]> => {
-    const response = await api.get("/rh/projetos/pendentes");
-    return response.data;
+    try {
+      // Modificado para buscar todos os projetos para o RH visualizar como vitrine
+      console.log("Buscando todos os projetos para o RH");
+      const response = await api.get("/rh/projetos/todos");
+      console.log("Resposta da API:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar projetos:", error);
+      throw error;
+    }
+  },
+
+  // Novo método para salvar feedback do usuário
+  salvarFeedbackUsuario: async (
+    projetoId: number,
+    feedback: string
+  ): Promise<any> => {
+    try {
+      const response = await api.post(`/rh/feedback/projeto/${projetoId}`, {
+        feedback,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao salvar feedback:", error);
+      throw error;
+    }
   },
 
   // Avaliações

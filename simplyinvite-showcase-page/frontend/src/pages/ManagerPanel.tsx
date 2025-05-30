@@ -8,6 +8,7 @@ import { Star, Calendar, User, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import axios from "axios";
 
 // Interfaces
 interface RecentTalent {
@@ -60,6 +61,9 @@ const ManagerPanel = () => {
     scheduledInterviews: 0,
     newTalentsInArea: 0,
   });
+  const [projetos, setProjetos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     // TODO: Replace with actual API calls
@@ -76,6 +80,26 @@ const ManagerPanel = () => {
       });
     };
     fetchManagerData();
+  }, []);
+
+  useEffect(() => {
+    const carregarProjetos = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get("/api/jovem/projetos/meus");
+        setProjetos(response.data);
+        setErro(null);
+      } catch (error) {
+        console.error("Erro ao carregar projetos:", error);
+        setErro(
+          "Não foi possível carregar seus projetos. Tente novamente mais tarde."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    carregarProjetos();
   }, []);
 
   const getMedalBadge = (medal: string | null) => {
@@ -246,9 +270,72 @@ const ManagerPanel = () => {
             )}
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Meus Projetos</CardTitle>
+            <Link to="/projetos/novo" className="btn-novo">
+              Enviar Novo Projeto
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p>Carregando seus projetos...</p>
+            ) : erro ? (
+              <p className="erro">{erro}</p>
+            ) : projetos.length === 0 ? (
+              <p>Você ainda não enviou nenhum projeto.</p>
+            ) : (
+              <div className="grid-projetos">
+                {projetos.map((projeto) => (
+                  <div key={projeto.id} className="card-projeto">
+                    <h3>{projeto.titulo}</h3>
+                    <p className="descricao">
+                      {projeto.descricao.substring(0, 100)}...
+                    </p>
+
+                    <div className="status">
+                      <span className={`badge status-${projeto.status}`}>
+                        {mapearStatus(projeto.status)}
+                      </span>
+                      {projeto.tem_avaliacao_rh > 0 && (
+                        <span className="badge avaliado">Avaliado pelo RH</span>
+                      )}
+                    </div>
+
+                    <div className="data">
+                      Enviado em:{" "}
+                      {new Date(projeto.criado_em).toLocaleDateString()}
+                    </div>
+
+                    <Link
+                      to={`/projetos/${projeto.id}`}
+                      className="btn-detalhes"
+                    >
+                      Ver Detalhes
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </UserPanelLayout>
   );
+};
+
+// Função auxiliar para mapear status para texto amigável
+const mapearStatus = (status) => {
+  const statusMap = {
+    pendente: "Pendente",
+    avaliado_rh: "Avaliado pelo RH",
+    avaliado_gestor: "Avaliado pelo Gestor",
+    convidado_entrevista: "Convidado para Entrevista",
+    rejeitado: "Não selecionado",
+  };
+
+  return statusMap[status] || status;
 };
 
 export default ManagerPanel;

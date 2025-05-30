@@ -1,4 +1,3 @@
-
 import React from "react";
 import { 
   Card, 
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Video, Eye, MessageSquare } from "lucide-react";
+import { Video, Eye, MessageSquare, Check } from "lucide-react";
 
 interface ProjectCardProps {
   title: string;
@@ -19,6 +18,8 @@ interface ProjectCardProps {
   onViewDetails?: () => void;
   onViewFeedback?: () => void;
   userType: "talent" | "hr" | "manager";
+  isEvaluated?: boolean;
+  onEvaluate?: () => void;
 }
 
 const ProjectCard = ({
@@ -28,7 +29,9 @@ const ProjectCard = ({
   hasFeedback,
   onViewDetails,
   onViewFeedback,
-  userType
+  userType,
+  isEvaluated = false,
+  onEvaluate
 }: ProjectCardProps) => {
   
   const getMedalColor = () => {
@@ -115,10 +118,18 @@ const ProjectCard = ({
         {userType === "hr" && (
           <Button 
             size="sm" 
-            onClick={onViewDetails}
+            onClick={onEvaluate || onViewDetails}
             className="flex-1"
+            variant={isEvaluated ? "outline" : "default"}
           >
-            Avaliar
+            {isEvaluated ? (
+              <>
+                <Check className="mr-2 h-4 w-4" />
+                Avaliado
+              </>
+            ) : (
+              "Avaliar"
+            )}
           </Button>
         )}
         
