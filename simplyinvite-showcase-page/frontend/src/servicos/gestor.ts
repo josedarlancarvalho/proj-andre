@@ -209,6 +209,31 @@ const gestorService = {
     const response = await api.get(`/gestor/talentos/${talentoId}/historico`);
     return response.data;
   },
+
+  // Projetos Avaliados pelo RH
+  buscarProjetosAvaliados: async () => {
+    console.log("Buscando projetos avaliados pelo RH");
+    try {
+      const response = await api.get("/api/gestor/projetos/avaliados");
+      console.log("Projetos avaliados recebidos:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar projetos avaliados:", error);
+      throw error;
+    }
+  },
+
+  buscarAvaliacoesEncaminhadas: async () => {
+    console.log("Buscando avaliações encaminhadas para gestor");
+    try {
+      const response = await api.get("/api/gestor/avaliacoes/encaminhadas");
+      console.log("Avaliações encaminhadas recebidas:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar avaliações encaminhadas:", error);
+      throw error;
+    }
+  },
 };
 
 export default gestorService;

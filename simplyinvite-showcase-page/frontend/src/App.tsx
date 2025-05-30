@@ -49,6 +49,7 @@ import HRReports from "@/pages/hr/HRReports";
 // Páginas de entrevistas e empresa
 import ManagerInterviews from "@/pages/manager/ManagerInterviews";
 import ManagerCompany from "@/pages/manager/ManagerCompany";
+import ManagerProjects from "@/pages/manager/ManagerProjects";
 
 // Página inicial
 import Index from "@/pages/Index";
@@ -288,6 +289,14 @@ const App = () => {
             element={
               <ProtectedRoute requiredProfileType="gestor">
                 <ConfiguracoesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gestor/projetos"
+            element={
+              <ProtectedRoute requiredProfileType="gestor">
+                <ManagerProjects />
               </ProtectedRoute>
             }
           />

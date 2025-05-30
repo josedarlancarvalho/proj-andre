@@ -201,6 +201,11 @@ const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
             icon: <Search className="h-4 w-4" />,
           },
           {
+            path: "/gestor/projetos",
+            label: "Projetos Avaliados",
+            icon: <FileText className="h-4 w-4" />,
+          },
+          {
             path: "/gestor/favoritos",
             label: "Favoritos",
             icon: <Star className="h-4 w-4" />,
