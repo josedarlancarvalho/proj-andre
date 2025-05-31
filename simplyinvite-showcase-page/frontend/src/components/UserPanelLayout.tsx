@@ -140,16 +140,6 @@ const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
             icon: <FileText className="h-4 w-4" />,
           },
           {
-            path: "/jovem/feedbacks",
-            label: "Feedbacks",
-            icon: <Medal className="h-4 w-4" />,
-          },
-          {
-            path: "/jovem/evolucao",
-            label: "Minha Evolução",
-            icon: <Clock className="h-4 w-4" />,
-          },
-          {
             path: "/jovem/convites",
             label: "Convites",
             icon: <Inbox className="h-4 w-4" />,

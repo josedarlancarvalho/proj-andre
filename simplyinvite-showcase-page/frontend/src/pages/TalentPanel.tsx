@@ -243,12 +243,6 @@ const TalentPanel = () => {
             icon={<FileVideo className="h-4 w-4" />}
           />
           <StatCard
-            title="Medalhas Recebidas"
-            value="0"
-            description="Medalhas ainda não contabilizadas"
-            icon={<Medal className="h-4 w-4" />}
-          />
-          <StatCard
             title="Visualizações"
             value="0"
             description="Seu vídeo ainda não foi visualizado"
@@ -293,11 +287,6 @@ const TalentPanel = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Feedbacks Recebidos</h2>
-              <Link to="/jovem/feedbacks">
-                <Button variant="outline" size="sm">
-                  Ver todos
-                </Button>
-              </Link>
             </div>
             {feedbacks.length > 0 ? (
               <FeedbackList feedbacks={feedbacks.slice(0, 1)} />
@@ -306,6 +295,8 @@ const TalentPanel = () => {
             )}
           </div>
 
+          {/* Seção removida do Vídeo */}
+          {/*
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Seu Vídeo</h2>
@@ -333,6 +324,7 @@ const TalentPanel = () => {
               </div>
             )}
           </div>
+          */}
         </div>
 
         {/* Convites */}

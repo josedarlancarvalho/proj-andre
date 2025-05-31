@@ -33,7 +33,6 @@ import TalentSubmissions from "@/pages/talent/TalentSubmissions";
 import HRPendingProjects from "@/pages/hr/HRPendingProjects";
 
 // Páginas de feedback
-import TalentFeedback from "@/pages/talent/TalentFeedback";
 import HREvaluationHistory from "@/pages/hr/HREvaluationHistory";
 
 // Páginas de mensagens
@@ -55,7 +54,6 @@ import ManagerProjects from "@/pages/manager/ManagerProjects";
 import Index from "@/pages/Index";
 
 // Importando componentes reais para Jovem Talento
-import TalentProgress from "@/pages/talent/TalentProgress"; // Componente para Minha Evolução
 import TalentInvitations from "@/pages/talent/TalentInvitations"; // Componente para Convites
 
 // Importando componentes para Notificações e Configurações
@@ -108,6 +106,8 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          {/* Rota de feedbacks (removida) */}
+          {/*
           <Route
             path="/jovem/feedbacks"
             element={
@@ -116,8 +116,10 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          */}
 
           {/* Rotas para Minha Evolução e Convites (usando componentes reais) */}
+          {/*
           <Route
             path="/jovem/evolucao"
             element={
@@ -126,6 +128,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          */}
           <Route
             path="/jovem/convites"
             element={
