@@ -347,11 +347,17 @@ interface Feedback {
   projetoId: number;
   gestorId: number;
   comentario: string;
+  nota?: number;
+  avaliador?: {
+    id: number;
+    nome: string;
+    cargo?: string;
+  };
   oportunidade?: {
     tipo: "estagio" | "trainee" | "junior";
     descricao: string;
   };
-  createdAt: Date;
+  createdAt: string;
 }
 
 // Serviço Gestor
@@ -443,6 +449,15 @@ const gestorService = {
       return [];
     }
   },
+
+  // Método para buscar feedback de um projeto
+  buscarFeedbackProjeto: async (projetoId: number): Promise<Feedback> => {
+    const response = await api.get(`/gestor/projetos/${projetoId}/feedback`);
+    return response.data;
+  },
 };
 
 export default gestorService;
+
+// Exportar o método buscarFeedbackProjeto
+export const buscarFeedbackProjeto = gestorService.buscarFeedbackProjeto;

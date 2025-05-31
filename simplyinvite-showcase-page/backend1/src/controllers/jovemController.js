@@ -3,7 +3,8 @@ const { Op } = require("sequelize");
 
 // Criar novo projeto
 exports.criarProjeto = async (req, res) => {
-  let { titulo, descricao, tecnologias, linkRepositorio, linkYoutube } = req.body;
+  let { titulo, descricao, tecnologias, linkRepositorio, linkYoutube } =
+    req.body;
   try {
     console.log(`Tentando criar projeto para usuário ID: ${req.usuario?.id}`);
     console.log(`Dados recebidos: ${JSON.stringify(req.body)}`);
@@ -39,7 +40,8 @@ exports.criarProjeto = async (req, res) => {
 
     // Validar link do YouTube
     if (linkYoutube) {
-      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+      const youtubeRegex =
+        /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
       if (!youtubeRegex.test(linkYoutube)) {
         errors.push({
           field: "linkYoutube",
@@ -782,77 +784,221 @@ exports.buscarFeedbackProjeto = async (req, res) => {
       return res.status(400).json({ message: "ID do projeto inválido" });
     }
 
-    // Verificar se o projeto existe primeiro (sem verificar o dono)
-    const projetoExiste = await db.Projeto.findByPk(projetoIdInt);
-    if (!projetoExiste) {
-      console.log(`Projeto não encontrado. Projeto ID: ${projetoId}`);
-      return res.status(404).json({ message: "Projeto não encontrado" });
-    }
-
-    // Verificar se o projeto pertence ao jovem
+    // Verificar se o projeto existe e pertence ao usuário
     const projeto = await db.Projeto.findOne({
       where: {
         id: projetoIdInt,
         usuarioId,
       },
+      include: [
+        {
+          model: db.Avaliacao,
+          as: "avaliacoes",
+          include: [
+            {
+              model: db.Usuario,
+              as: "avaliador",
+              attributes: ["id", "nomeCompleto", "tipoUsuario"],
+            },
+          ],
+        },
+      ],
     });
 
     if (!projeto) {
-      console.log(
-        `Projeto ID: ${projetoId} não pertence ao usuário ID: ${usuarioId}`
-      );
-      return res
-        .status(403)
-        .json({ message: "Sem permissão para acessar este projeto" });
+      console.log(`Projeto não encontrado ou não pertence ao usuário`);
+      return res.status(404).json({ message: "Projeto não encontrado" });
     }
 
-    console.log(`Projeto encontrado: ${projeto.id}, título: ${projeto.titulo}`);
+    // Verificar se há avaliações
+    if (!projeto.avaliacoes || projeto.avaliacoes.length === 0) {
+      console.log(
+        `Nenhuma avaliação encontrada para o projeto ID: ${projetoId}`
+      );
+      return res.status(404).json({ message: "Nenhuma avaliação encontrada" });
+    }
 
-    // Buscar avaliações do projeto
-    const avaliacoes = await db.Avaliacao.findAll({
-      where: { projetoId: projetoIdInt },
-      include: [
-        {
-          model: db.Usuario,
-          as: "avaliador",
-          attributes: ["id", "nomeCompleto", "tipoUsuario", "fotoPerfil"],
-        },
-      ],
-    });
+    // Mapear avaliações para um formato mais amigável
+    const feedbacks = projeto.avaliacoes.map((avaliacao) => ({
+      id: avaliacao.id,
+      nota: avaliacao.nota,
+      comentario: avaliacao.comentario,
+      medalha: avaliacao.medalha,
+      avaliador: {
+        id: avaliacao.avaliador.id,
+        nome: avaliacao.avaliador.nomeCompleto,
+        tipoUsuario: avaliacao.avaliador.tipoUsuario,
+      },
+      createdAt: avaliacao.createdAt,
+    }));
 
-    console.log(
-      `Encontradas ${avaliacoes.length} avaliações para o projeto ID: ${projetoId}`
-    );
-
-    // Buscar feedbacks do projeto
-    const feedbacks = await db.Feedback.findAll({
-      where: { projetoId: projetoIdInt },
-      include: [
-        {
-          model: db.Usuario,
-          as: "gestor",
-          attributes: ["id", "nomeCompleto", "tipoUsuario", "fotoPerfil"],
-        },
-      ],
-    });
-
-    console.log(
-      `Encontrados ${feedbacks.length} feedbacks para o projeto ID: ${projetoId}`
-    );
-
-    const result = {
-      avaliacoes,
-      feedbacks,
-    };
-
-    console.log(`Retornando dados de feedback para o projeto ID: ${projetoId}`);
-    res.json(result);
+    console.log(`Retornando ${feedbacks.length} avaliações para o projeto`);
+    res.json(feedbacks);
   } catch (error) {
     console.error("Erro ao buscar feedbacks:", error);
     res.status(500).json({
       message: "Erro ao buscar feedbacks do projeto",
       error: error.message,
-      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    });
+  }
+};
+
+// Buscar feedback do gestor para um projeto específico
+exports.buscarFeedbackGestor = async (req, res) => {
+  try {
+    const { projetoId } = req.params;
+    const usuarioId = req.usuario.id;
+
+    console.log(
+      `Buscando feedback do gestor para o projeto ID: ${projetoId}, usuário ID: ${usuarioId}`
+    );
+
+    // Validar que o ID é um número
+    const projetoIdInt = parseInt(projetoId, 10);
+    if (isNaN(projetoIdInt)) {
+      console.error(`ID do projeto inválido: ${projetoId}`);
+      return res.status(400).json({ message: "ID do projeto inválido" });
+    }
+
+    // Verificar se o projeto existe e pertence ao usuário
+    const projeto = await db.Projeto.findOne({
+      where: {
+        id: projetoIdInt,
+        usuarioId,
+      },
+      include: [
+        {
+          model: db.Feedback,
+          as: "feedbacks",
+          include: [
+            {
+              model: db.Usuario,
+              as: "gestor",
+              attributes: ["id", "nomeCompleto", "tipoUsuario", "cargo"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!projeto) {
+      console.log(`Projeto não encontrado ou não pertence ao usuário`);
+      return res.status(404).json({ message: "Projeto não encontrado" });
+    }
+
+    // Verificar se há feedbacks do gestor
+    if (!projeto.feedbacks || projeto.feedbacks.length === 0) {
+      console.log(
+        `Nenhum feedback do gestor encontrado para o projeto ID: ${projetoId}`
+      );
+      return res
+        .status(404)
+        .json({ message: "Nenhum feedback do gestor encontrado" });
+    }
+
+    // Retornar o primeiro feedback do gestor (pode ser modificado para retornar todos)
+    const feedbackGestor = projeto.feedbacks[0];
+
+    console.log("Feedback do gestor encontrado:", feedbackGestor);
+    res.json({
+      id: feedbackGestor.id,
+      projetoId: feedbackGestor.projetoId,
+      gestorId: feedbackGestor.gestorId,
+      comentario: feedbackGestor.comentario,
+      nota: feedbackGestor.nota,
+      avaliador: {
+        id: feedbackGestor.gestor.id,
+        nome: feedbackGestor.gestor.nomeCompleto,
+        cargo: feedbackGestor.gestor.cargo,
+      },
+      oportunidade: feedbackGestor.oportunidade,
+      createdAt: feedbackGestor.createdAt,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar feedback do gestor:", error);
+    res.status(500).json({
+      message: "Erro ao buscar feedback do gestor",
+      error: error.message,
+    });
+  }
+};
+
+// Buscar avaliações do RH para um projeto específico
+exports.buscarAvaliacoesRH = async (req, res) => {
+  try {
+    const { projetoId } = req.params;
+    const usuarioId = req.usuario.id;
+
+    console.log(
+      `Buscando avaliações do RH para o projeto ID: ${projetoId}, usuário ID: ${usuarioId}`
+    );
+
+    // Validar que o ID é um número
+    const projetoIdInt = parseInt(projetoId, 10);
+    if (isNaN(projetoIdInt)) {
+      console.error(`ID do projeto inválido: ${projetoId}`);
+      return res.status(400).json({ message: "ID do projeto inválido" });
+    }
+
+    // Verificar se o projeto existe e pertence ao usuário
+    const projeto = await db.Projeto.findOne({
+      where: {
+        id: projetoIdInt,
+        usuarioId,
+      },
+      include: [
+        {
+          model: db.Avaliacao,
+          as: "avaliacoes",
+          include: [
+            {
+              model: db.Usuario,
+              as: "avaliador",
+              attributes: ["id", "nomeCompleto", "tipoUsuario"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!projeto) {
+      console.log(`Projeto não encontrado ou não pertence ao usuário`);
+      return res.status(404).json({ message: "Projeto não encontrado" });
+    }
+
+    // Verificar se há avaliações
+    if (!projeto.avaliacoes || projeto.avaliacoes.length === 0) {
+      console.log(
+        `Nenhuma avaliação do RH encontrada para o projeto ID: ${projetoId}`
+      );
+      return res
+        .status(404)
+        .json({ message: "Nenhuma avaliação do RH encontrada" });
+    }
+
+    // Mapear avaliações para um formato mais amigável
+    const avaliacoesRH = projeto.avaliacoes.map((avaliacao) => ({
+      id: avaliacao.id,
+      nota: avaliacao.nota,
+      comentario: avaliacao.comentario,
+      medalha: avaliacao.medalha,
+      avaliador: {
+        id: avaliacao.avaliador.id,
+        nome: avaliacao.avaliador.nomeCompleto,
+        tipoUsuario: avaliacao.avaliador.tipoUsuario,
+      },
+      createdAt: avaliacao.createdAt,
+    }));
+
+    console.log(
+      `Retornando ${avaliacoesRH.length} avaliações do RH para o projeto`
+    );
+    res.json(avaliacoesRH);
+  } catch (error) {
+    console.error("Erro ao buscar avaliações do RH:", error);
+    res.status(500).json({
+      message: "Erro ao buscar avaliações do RH",
+      error: error.message,
     });
   }
 };

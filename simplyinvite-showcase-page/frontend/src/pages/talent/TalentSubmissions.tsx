@@ -6,10 +6,7 @@ import { FileText, Plus, Eye, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/panels/ProjectCard";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  buscarMeusProjetos,
-  submeterProjeto,
-} from "@/servicos/jovem";
+import { buscarMeusProjetos, submeterProjeto } from "@/servicos/jovem";
 import jovemService from "@/servicos/jovem";
 import { mapAuthToComponentType } from "@/utils/profileTypeMapper";
 import { toast } from "sonner";
@@ -25,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FeedbackModal from "@/components/panels/FeedbackModal";
+import { buscarFeedbackProjeto } from "@/servicos/gestor";
+import { FeedbackGestor, Feedback } from "@/servicos/jovem";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -51,6 +50,18 @@ interface ProjetoDetalhe {
   status: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface ProjetoFeedback {
+  id: number;
+  comentario: string;
+  nota?: number;
+  avaliador?: {
+    nome: string;
+    tipoUsuario: string;
+  };
+  medalha?: "ouro" | "prata" | "bronze";
+  createdAt: string;
 }
 
 const TalentSubmissions = () => {
@@ -85,6 +96,22 @@ const TalentSubmissions = () => {
   });
   const [loadingFeedback, setLoadingFeedback] = useState(false);
 
+  // Adicionar estado para o modal de feedback
+  const [feedbackModal, setFeedbackModal] = useState(false);
+  const [projetoFeedback, setProjetoFeedback] =
+    useState<ProjetoFeedback | null>(null);
+
+  // No estado do componente, adicionar:
+  const [feedbackGestor, setFeedbackGestor] = useState<FeedbackGestor | null>(
+    null
+  );
+  const [isFeedbackGestorModalOpen, setIsFeedbackGestorModalOpen] =
+    useState(false);
+
+  // No estado do componente, adicionar:
+  const [avaliacoesRH, setAvaliacoesRH] = useState<Feedback[]>([]);
+  const [isAvaliacoesRHModalOpen, setIsAvaliacoesRHModalOpen] = useState(false);
+
   // Função para recarregar a lista de projetos
   const recarregarProjetos = async () => {
     try {
@@ -100,7 +127,9 @@ const TalentSubmissions = () => {
           medalType: (projeto as any).avaliacao?.medalha || null,
           hasFeedback: (projeto as any).feedback ? true : false,
           status: projeto.status,
-          date: new Date((projeto as any).createdAt || Date.now()).toLocaleDateString(),
+          date: new Date(
+            (projeto as any).createdAt || Date.now()
+          ).toLocaleDateString(),
           tecnologias: projeto.tecnologias,
           descricao: projeto.descricao,
           linkRepositorio: projeto.linkRepositorio,
@@ -307,6 +336,76 @@ const TalentSubmissions = () => {
     }
   };
 
+  // Função para buscar e exibir feedback
+  const handleVerFeedback = async (projetoId) => {
+    try {
+      console.log(
+        `Iniciando busca de feedback para o projeto ID: ${projetoId}`
+      );
+      const feedbacks: ProjetoFeedback[] = await buscarFeedbackProjeto(
+        projetoId
+      );
+
+      console.log("Feedbacks recebidos:", feedbacks);
+
+      if (!feedbacks || feedbacks.length === 0) {
+        toast.warning("Nenhum feedback encontrado para este projeto");
+        return;
+      }
+
+      // Selecionar o primeiro feedback (pode ser modificado para mostrar todos)
+      setProjetoFeedback(feedbacks[0]);
+      setFeedbackModal(true);
+    } catch (error) {
+      console.error("Erro completo ao buscar feedback:", error);
+      toast.error(`Não foi possível carregar o feedback: ${error.message}`);
+    }
+  };
+
+  // Método para buscar feedback do gestor
+  const handleVerFeedbackGestor = async (projetoId: string) => {
+    try {
+      console.log(
+        `Buscando feedback do gestor para o projeto ID: ${projetoId}`
+      );
+      const feedback = await jovemService.buscarFeedbackGestor(
+        parseInt(projetoId)
+      );
+
+      if (feedback) {
+        console.log("Feedback do gestor encontrado:", feedback);
+        setFeedbackGestor(feedback);
+        setIsFeedbackGestorModalOpen(true);
+      } else {
+        toast.warning("Nenhum feedback do gestor encontrado para este projeto");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar feedback do gestor:", error);
+      toast.error(`Não foi possível carregar o feedback: ${error.message}`);
+    }
+  };
+
+  // Método para buscar avaliações do RH
+  const handleVerAvaliacoesRH = async (projetoId: string) => {
+    try {
+      console.log(`Buscando avaliações do RH para o projeto ID: ${projetoId}`);
+      const avaliacoes = await jovemService.buscarAvaliacoesRH(
+        parseInt(projetoId)
+      );
+
+      if (avaliacoes && avaliacoes.length > 0) {
+        console.log("Avaliações do RH encontradas:", avaliacoes);
+        setAvaliacoesRH(avaliacoes);
+        setIsAvaliacoesRHModalOpen(true);
+      } else {
+        toast.warning("Nenhuma avaliação do RH encontrada para este projeto");
+      }
+    } catch (error) {
+      console.error("Erro ao buscar avaliações do RH:", error);
+      toast.error(`Não foi possível carregar as avaliações: ${error.message}`);
+    }
+  };
+
   return (
     <UserPanelLayout userType="jovem">
       <div className="space-y-6">
@@ -335,7 +434,26 @@ const TalentSubmissions = () => {
                     onViewDetails={() => handleViewDetails(project.id)}
                     onViewFeedback={() => handleViewFeedback(project.id)}
                     userType={componentUserType}
-                  />
+                  >
+                    {project.hasFeedback && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleVerFeedbackGestor(project.id)}
+                      >
+                        Ver Feedback do Gestor
+                      </Button>
+                    )}
+                    {project.status === "avaliado" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleVerAvaliacoesRH(project.id)}
+                      >
+                        Ver Avaliações do RH
+                      </Button>
+                    )}
+                  </ProjectCard>
                 ))
               ) : (
                 <p>
@@ -407,9 +525,7 @@ const TalentSubmissions = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="linkYoutube">
-                Link do YouTube (opcional)
-              </Label>
+              <Label htmlFor="linkYoutube">Link do YouTube (opcional)</Label>
               <Input
                 id="linkYoutube"
                 name="linkYoutube"
@@ -568,6 +684,175 @@ const TalentSubmissions = () => {
           feedbacks={feedbackData.feedbacks}
           isLoading={loadingFeedback}
         />
+      )}
+
+      {/* Adicionar modal de feedback */}
+      {feedbackModal && projetoFeedback && (
+        <Dialog open={feedbackModal} onOpenChange={setFeedbackModal}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Feedback do Projeto</DialogTitle>
+              {projetoFeedback.avaliador && (
+                <DialogDescription>
+                  Avaliado por {projetoFeedback.avaliador.nome}
+                  {projetoFeedback.avaliador.tipoUsuario &&
+                    ` (${projetoFeedback.avaliador.tipoUsuario})`}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <div className="space-y-4">
+              {projetoFeedback.nota && (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Nota:</span>
+                  <Badge variant="secondary">{projetoFeedback.nota}/10</Badge>
+                </div>
+              )}
+
+              {projetoFeedback.medalha && (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Medalha:</span>
+                  <Badge variant="outline">{projetoFeedback.medalha}</Badge>
+                </div>
+              )}
+
+              <div>
+                <h4 className="font-medium mb-2">Comentário</h4>
+                <p className="text-sm text-muted-foreground">
+                  {projetoFeedback.comentario}
+                </p>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                Recebido em:{" "}
+                {new Date(projetoFeedback.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setFeedbackModal(false)}>Fechar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* No render, adicionar o modal de feedback do gestor */}
+      {feedbackGestor && (
+        <Dialog
+          open={isFeedbackGestorModalOpen}
+          onOpenChange={setIsFeedbackGestorModalOpen}
+        >
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Feedback do Gestor</DialogTitle>
+              {feedbackGestor.avaliador && (
+                <DialogDescription>
+                  Por {feedbackGestor.avaliador.nome}
+                  {feedbackGestor.avaliador.cargo &&
+                    ` (${feedbackGestor.avaliador.cargo})`}
+                </DialogDescription>
+              )}
+            </DialogHeader>
+            <div className="space-y-4">
+              {feedbackGestor.nota && (
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">Nota:</span>
+                  <Badge variant="secondary">{feedbackGestor.nota}/10</Badge>
+                </div>
+              )}
+
+              {feedbackGestor.oportunidade && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Oportunidade</h4>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant="outline">
+                      {feedbackGestor.oportunidade.tipo}
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      {feedbackGestor.oportunidade.descricao}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h4 className="font-medium mb-2">Comentário</h4>
+                <p className="text-sm text-muted-foreground">
+                  {feedbackGestor.comentario}
+                </p>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                Recebido em:{" "}
+                {new Date(feedbackGestor.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setIsFeedbackGestorModalOpen(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* No render, adicionar o modal de avaliações do RH */}
+      {avaliacoesRH.length > 0 && (
+        <Dialog
+          open={isAvaliacoesRHModalOpen}
+          onOpenChange={setIsAvaliacoesRHModalOpen}
+        >
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Avaliações do RH</DialogTitle>
+              <DialogDescription>
+                Comentários e notas da equipe de Recursos Humanos
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {avaliacoesRH.map((avaliacao) => (
+                <Card key={avaliacao.id} className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <h4 className="font-medium">
+                        {avaliacao.avaliador.nome}
+                      </h4>
+                      <p className="text-xs text-muted-foreground">
+                        {avaliacao.avaliador.tipoUsuario}
+                      </p>
+                    </div>
+                    {avaliacao.nota && (
+                      <Badge variant="secondary">
+                        Nota: {avaliacao.nota}/10
+                      </Badge>
+                    )}
+                  </div>
+
+                  {avaliacao.medalha && (
+                    <div className="mb-2">
+                      <Badge variant="outline">
+                        {avaliacao.medalha.charAt(0).toUpperCase() +
+                          avaliacao.medalha.slice(1)}
+                      </Badge>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-muted-foreground">
+                    {avaliacao.comentario}
+                  </p>
+
+                  <div className="text-xs text-muted-foreground mt-2">
+                    Avaliado em:{" "}
+                    {new Date(avaliacao.createdAt).toLocaleDateString()}
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setIsAvaliacoesRHModalOpen(false)}>
+                Fechar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </UserPanelLayout>
   );

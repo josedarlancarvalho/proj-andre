@@ -138,4 +138,16 @@ router.post(
   jovemController.completarOnboarding
 );
 
+// Rota para buscar feedback do gestor para um projeto específico
+router.get(
+  "/projetos/:projetoId/feedback-gestor",
+  jovemController.buscarFeedbackGestor
+);
+
+// Rota para buscar avaliações do RH para um projeto específico
+router.get(
+  "/projetos/:projetoId/avaliacoes-rh",
+  jovemController.buscarAvaliacoesRH
+);
+
 module.exports = router;

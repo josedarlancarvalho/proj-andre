@@ -12,13 +12,16 @@ export interface Projeto {
 }
 
 export interface Feedback {
-  id: string;
-  projetoId: string;
-  avaliadorNome: string;
+  id: number;
+  nota?: number;
   comentario: string;
-  nota: number;
   medalha?: "ouro" | "prata" | "bronze";
-  dataAvaliacao: string;
+  avaliador: {
+    id: number;
+    nome: string;
+    tipoUsuario: string;
+  };
+  createdAt: string;
 }
 
 export interface Convite {
@@ -55,6 +58,25 @@ interface ProjetoComAvaliacao extends Projeto {
     };
     createdAt: Date;
   };
+}
+
+// Interface para feedback do gestor
+export interface FeedbackGestor {
+  id: number;
+  projetoId: number;
+  gestorId: number;
+  comentario: string;
+  nota?: number;
+  avaliador?: {
+    id: number;
+    nome: string;
+    cargo?: string;
+  };
+  oportunidade?: {
+    tipo: "estagio" | "trainee" | "junior";
+    descricao: string;
+  };
+  createdAt: string;
 }
 
 // Submeter novo projeto
@@ -98,7 +120,8 @@ export async function submeterProjeto(projeto: Omit<Projeto, "id" | "status">) {
 
     // Validar link do YouTube se fornecido
     if (projeto.linkYoutube) {
-      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+      const youtubeRegex =
+        /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
       if (!youtubeRegex.test(projeto.linkYoutube)) {
         throw new Error("Link do YouTube inválido");
       }
@@ -281,7 +304,7 @@ const jovemService = {
   },
 
   // Serviço para buscar feedbacks de um projeto
-  buscarFeedbackProjeto: async (projetoId: number): Promise<any> => {
+  buscarFeedbackProjeto: async (projetoId: number): Promise<Feedback[]> => {
     try {
       console.log(`Solicitando feedback para o projeto ID: ${projetoId}`);
       const response = await api.get(
@@ -294,6 +317,58 @@ const jovemService = {
       return response.data;
     } catch (error) {
       console.error("Erro ao buscar feedback do projeto:", error);
+
+      // Se não houver feedback, retornar array vazio
+      if (error.response && error.response.status === 404) {
+        return [];
+      }
+
+      throw error;
+    }
+  },
+
+  // Método para buscar feedback completo do gestor
+  buscarFeedbackGestor: async (
+    projetoId: number
+  ): Promise<FeedbackGestor | null> => {
+    try {
+      console.log(
+        `Buscando feedback do gestor para o projeto ID: ${projetoId}`
+      );
+      const response = await api.get(
+        `/api/jovem/projetos/${projetoId}/feedback-gestor`
+      );
+      console.log("Feedback do gestor recebido:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar feedback do gestor:", error);
+
+      // Se não houver feedback, retornar null
+      if (error.response && error.response.status === 404) {
+        return null;
+      }
+
+      throw error;
+    }
+  },
+
+  // Método para buscar avaliações do RH para um projeto específico
+  buscarAvaliacoesRH: async (projetoId: number): Promise<Feedback[]> => {
+    try {
+      console.log(`Buscando avaliações do RH para o projeto ID: ${projetoId}`);
+      const response = await api.get(
+        `/api/jovem/projetos/${projetoId}/avaliacoes-rh`
+      );
+      console.log("Avaliações do RH recebidas:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao buscar avaliações do RH:", error);
+
+      // Se não houver avaliações, retornar array vazio
+      if (error.response && error.response.status === 404) {
+        return [];
+      }
+
       throw error;
     }
   },
