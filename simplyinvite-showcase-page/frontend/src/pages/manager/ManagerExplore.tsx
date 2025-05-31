@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
+import gestorService, { registrarVisualizacaoTalento } from "@/servicos/gestor";
+import { adicionarFavorito, isFavorito } from "@/servicos/favoritos";
+import { toast } from "sonner";
 
 // Interfaces
 interface ExplorableTalent {
@@ -34,13 +39,17 @@ interface FilterOptions {
 const ManagerExplore = () => {
   const [userName, setUserName] = useState("Carregando...");
   const [allTalents, setAllTalents] = useState<ExplorableTalent[]>([]); // Holds all fetched talents
-  const [filteredTalents, setFilteredTalents] = useState<ExplorableTalent[]>([]); // Holds talents after filtering
+  const [filteredTalents, setFilteredTalents] = useState<ExplorableTalent[]>(
+    []
+  ); // Holds talents after filtering
   const [searchTerm, setSearchTerm] = useState("");
+  const location = useLocation();
+  const [selectedTalent, setSelectedTalent] = useState(null);
 
   const [filters, setFilters] = useState({
     medal: "all", // Default to all
     category: "all",
-    location: "all"
+    location: "all",
   });
 
   // Options for filters - these could also be fetched from an API
@@ -74,7 +83,7 @@ const ManagerExplore = () => {
       // setFilteredTalents(talentsData); // Initially, all talents are shown
       setAllTalents([]);
       setFilteredTalents([]);
-      
+
       // Fetch filter options (example for categories and locations)
       // const filterOptionsResponse = await fetch("/api/filters/explore");
       // const filterOpts = await filterOptionsResponse.json();
@@ -102,22 +111,64 @@ const ManagerExplore = () => {
     let talentsToFilter = [...allTalents];
 
     if (filters.medal !== "all") {
-      talentsToFilter = talentsToFilter.filter(talent => talent.medal === filters.medal);
+      talentsToFilter = talentsToFilter.filter(
+        (talent) => talent.medal === filters.medal
+      );
     }
     if (filters.category !== "all") {
-      talentsToFilter = talentsToFilter.filter(talent => talent.category === filters.category);
+      talentsToFilter = talentsToFilter.filter(
+        (talent) => talent.category === filters.category
+      );
     }
     if (filters.location !== "all") {
-      talentsToFilter = talentsToFilter.filter(talent => talent.city === filters.location);
+      talentsToFilter = talentsToFilter.filter(
+        (talent) => talent.city === filters.location
+      );
     }
     if (searchTerm) {
-      talentsToFilter = talentsToFilter.filter(talent => 
-        talent.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        talent.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      talentsToFilter = talentsToFilter.filter(
+        (talent) =>
+          talent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          talent.tags.some((tag) =>
+            tag.toLowerCase().includes(searchTerm.toLowerCase())
+          )
       );
     }
     setFilteredTalents(talentsToFilter);
   }, [filters, searchTerm, allTalents]);
+
+  // Verificar se há um ID na URL para visualizar um talento específico
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const talentoId = params.get("id");
+
+    if (talentoId) {
+      // Buscar dados do talento específico
+      const fetchTalentoEspecifico = async () => {
+        try {
+          const talento = await gestorService.buscarTalentos();
+          const talentoEncontrado = talento.find(
+            (t) => t.id.toString() === talentoId
+          );
+
+          if (talentoEncontrado) {
+            setSelectedTalent(talentoEncontrado);
+            // Registrar visualização
+            await gestorService.registrarVisualizacao(talentoEncontrado.id);
+            toast.success(
+              `Visualizando perfil de ${
+                talentoEncontrado.nomeCompleto || "Talento"
+              }`
+            );
+          }
+        } catch (error) {
+          console.error("Erro ao buscar talento específico:", error);
+        }
+      };
+
+      fetchTalentoEspecifico();
+    }
+  }, [location]);
 
   const handleAddToFavorites = (id: string) => {
     console.log("Add to favorites", id);
@@ -129,6 +180,27 @@ const ManagerExplore = () => {
 
   const handleContact = (id: string) => {
     console.log("Contact", id);
+  };
+
+  const handleFavoritarTalento = async (talentoId) => {
+    try {
+      toast.promise(adicionarFavorito({ id: talentoId, nome: "Talento" }), {
+        loading: "Adicionando aos favoritos...",
+        success: "Talento adicionado aos favoritos!",
+        error: "Não foi possível adicionar aos favoritos",
+      });
+    } catch (error) {
+      console.error("Erro ao favoritar talento:", error);
+    }
+  };
+
+  const handleVisualizarPerfil = async (talento) => {
+    setSelectedTalent(talento);
+    try {
+      await gestorService.registrarVisualizacao(talento.id);
+    } catch (error) {
+      console.error("Erro ao registrar visualização:", error);
+    }
   };
 
   const getMedalBadge = (medal: string | null) => {
@@ -149,7 +221,9 @@ const ManagerExplore = () => {
     <UserPanelLayout userType="gestor">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Explorar Talentos</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Explorar Talentos
+          </h1>
         </div>
 
         <Card>
@@ -159,62 +233,84 @@ const ManagerExplore = () => {
           <CardContent>
             <div className="flex flex-wrap gap-4">
               <div className="w-full md:w-auto">
-                <Select 
-                  value={filters.medal} 
-                  onValueChange={(value) => setFilters({...filters, medal: value})}
+                <Select
+                  value={filters.medal}
+                  onValueChange={(value) =>
+                    setFilters({ ...filters, medal: value })
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Medalha" />
                   </SelectTrigger>
                   <SelectContent>
-                    {medalOptions.map(option => (
-                      <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                    {medalOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="w-full md:w-auto">
-                <Select 
-                  value={filters.category} 
-                  onValueChange={(value) => setFilters({...filters, category: value === "all" ? "all" : value})}
+                <Select
+                  value={filters.category}
+                  onValueChange={(value) =>
+                    setFilters({
+                      ...filters,
+                      category: value === "all" ? "all" : value,
+                    })
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Categoria" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categoryOptions.map(option => (
-                      <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                    {categoryOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="w-full md:w-auto">
-                <Select 
-                  value={filters.location} 
-                  onValueChange={(value) => setFilters({...filters, location: value === "all" ? "all" : value})}
+                <Select
+                  value={filters.location}
+                  onValueChange={(value) =>
+                    setFilters({
+                      ...filters,
+                      location: value === "all" ? "all" : value,
+                    })
+                  }
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Localização" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locationOptions.map(option => (
-                      <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                    {locationOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {option.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="flex-1">
-                <Input 
-                  placeholder="Buscar por nome, habilidade..." 
+                <Input
+                  placeholder="Buscar por nome, habilidade..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
 
-              <Button onClick={() => { /* Trigger filter application, already handled by useEffect */ }}>
+              <Button
+                onClick={() => {
+                  /* Trigger filter application, already handled by useEffect */
+                }}
+              >
                 <Search className="mr-2 h-4 w-4" />
                 Buscar
               </Button>
@@ -239,34 +335,38 @@ const ManagerExplore = () => {
                 </div>
                 <CardContent className="p-6">
                   <div className="mb-4">
-                    <div className="text-sm font-medium mb-1">Projeto em destaque:</div>
+                    <div className="text-sm font-medium mb-1">
+                      Projeto em destaque:
+                    </div>
                     <div className="text-sm">{talent.project}</div>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {talent.tags.map((tag, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">{tag}</Badge>
+                        <Badge key={i} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Button 
-                      variant="default" 
-                      className="w-full" 
+                    <Button
+                      variant="default"
+                      className="w-full"
                       onClick={() => handleScheduleInterview(talent.id)}
                     >
                       <Calendar className="mr-2 h-4 w-4" />
                       Agendar Entrevista
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handleAddToFavorites(talent.id)}
+                      <Button
+                        variant="outline"
+                        onClick={() => handleFavoritarTalento(talent.id)}
                       >
                         <Star className="mr-2 h-4 w-4" />
                         Favoritar
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => handleContact(talent.id)}
                       >
                         <MessageSquare className="mr-2 h-4 w-4" />

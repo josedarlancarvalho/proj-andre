@@ -3,14 +3,14 @@ import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Calendar, 
-  MessageSquare, 
-  Star, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  MessageCircle 
+import {
+  Calendar,
+  MessageSquare,
+  Star,
+  Trash2,
+  CheckCircle,
+  Clock,
+  MessageCircle,
 } from "lucide-react";
 import {
   Select,
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { listarFavoritos, removerFavorito } from "@/servicos/favoritos";
+import { toast } from "sonner";
 
 // Interface for Favorite Talent
 interface FavoriteTalent {
@@ -38,16 +40,43 @@ const ManagerFavorites = () => {
   const [userName, setUserName] = useState("Carregando...");
   const [favoritesList, setFavoritesList] = useState<FavoriteTalent[]>([]);
   const [statusFilter, setStatusFilter] = useState("all"); // Default to 'all'
+  const [loading, setLoading] = useState(true);
+  const [favoriteTalents, setFavoriteTalents] = useState<FavoriteTalent[]>([]);
+  const [filteredTalents, setFilteredTalents] = useState<FavoriteTalent[]>([]);
 
   useEffect(() => {
-    // TODO: Replace with actual API calls
-    const fetchFavoritesData = async () => {
-      // const userResponse = await fetch("/api/manager/user-info");
-      // const userData = await userResponse.json();
-      // setUserName(userData.name);
-      setFavoritesList([]); // Initialize with empty or fetched data
+    const carregarFavoritos = async () => {
+      setLoading(true);
+      try {
+        const favoritos = await listarFavoritos();
+
+        // Transformar os favoritos para o formato esperado pelo componente
+        const favoritosFormatados = favoritos.map((fav) => ({
+          id: fav.id,
+          name: fav.talentoNome,
+          // Valores padrão para as outras propriedades que não temos
+          age: 0,
+          city: "",
+          category: "",
+          medal: null,
+          project: "",
+          status: "favorito",
+          dateAdded: fav.dataCriacao || new Date().toISOString(),
+        }));
+
+        setFavoriteTalents(favoritosFormatados);
+        setFilteredTalents(favoritosFormatados);
+      } catch (error) {
+        console.error("Erro ao carregar favoritos:", error);
+        toast.error(
+          "Não foi possível carregar os favoritos. Tente novamente mais tarde."
+        );
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchFavoritesData();
+
+    carregarFavoritos();
   }, []);
 
   const handleScheduleInterview = (id: string) => {
@@ -58,8 +87,24 @@ const ManagerFavorites = () => {
     console.log("Contact", id);
   };
 
-  const handleRemove = (id: string) => {
-    console.log("Remove from favorites", id);
+  const handleRemoveFavorite = async (id: string) => {
+    try {
+      await toast.promise(removerFavorito(id), {
+        loading: "Removendo dos favoritos...",
+        success: "Talento removido dos favoritos!",
+        error: "Não foi possível remover dos favoritos",
+      });
+
+      // Atualizar a lista local
+      setFavoriteTalents((prevFavorites) =>
+        prevFavorites.filter((favorite) => favorite.id !== id)
+      );
+      setFilteredTalents((prevFiltered) =>
+        prevFiltered.filter((talent) => talent.id !== id)
+      );
+    } catch (error) {
+      console.error("Erro ao remover favorito:", error);
+    }
   };
 
   const getMedalBadge = (medal: string) => {
@@ -78,30 +123,51 @@ const ManagerFavorites = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "avaliando":
-        return <Badge variant="outline" className="flex items-center gap-1"><Clock className="h-3 w-3" /> Avaliando</Badge>;
+        return (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" /> Avaliando
+          </Badge>
+        );
       case "em contato":
-        return <Badge variant="outline" className="bg-blue-50 flex items-center gap-1"><MessageCircle className="h-3 w-3" /> Em Contato</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 flex items-center gap-1"
+          >
+            <MessageCircle className="h-3 w-3" /> Em Contato
+          </Badge>
+        );
       case "convidado":
-        return <Badge variant="outline" className="bg-green-50 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Convidado</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-50 flex items-center gap-1"
+          >
+            <CheckCircle className="h-3 w-3" /> Convidado
+          </Badge>
+        );
       default:
         return <Badge variant="outline">-</Badge>;
     }
   };
 
-  const filteredFavorites = statusFilter === "all"
-    ? favoritesList
-    : favoritesList.filter(fav => fav.status === statusFilter);
+  const filteredFavorites =
+    statusFilter === "all"
+      ? favoritesList
+      : favoritesList.filter((fav) => fav.status === statusFilter);
 
   return (
     <UserPanelLayout userType="gestor">
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-2xl font-bold tracking-tight">Favoritos</h1>
-          
+
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filtrar por status:</span>
-            <Select 
-              value={statusFilter} 
+            <span className="text-sm text-muted-foreground">
+              Filtrar por status:
+            </span>
+            <Select
+              value={statusFilter}
               onValueChange={(value) => setStatusFilter(value)}
             >
               <SelectTrigger className="w-[160px]">
@@ -125,49 +191,52 @@ const ManagerFavorites = () => {
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-lg">{favorite.name}</h3>
+                        <h3 className="font-semibold text-lg">
+                          {favorite.name}
+                        </h3>
                         <div className="flex items-center gap-2">
                           {getMedalBadge(favorite.medal)}
                           {getStatusBadge(favorite.status)}
                         </div>
                       </div>
-                      
+
                       <div className="text-sm text-muted-foreground mb-2">
-                        {favorite.age} anos • {favorite.city} • {favorite.category}
+                        {favorite.age} anos • {favorite.city} •{" "}
+                        {favorite.category}
                       </div>
-                      
+
                       <div className="text-sm">
                         <span className="font-medium">Projeto: </span>
                         {favorite.project}
                       </div>
-                      
+
                       <div className="text-xs text-muted-foreground mt-1">
                         Adicionado em {favorite.dateAdded}
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col gap-2 min-w-[200px]">
-                      <Button 
+                      <Button
                         variant="default"
                         onClick={() => handleScheduleInterview(favorite.id)}
                       >
                         <Calendar className="mr-2 h-4 w-4" />
                         Agendar Entrevista
                       </Button>
-                      
+
                       <div className="grid grid-cols-2 gap-2">
-                        <Button 
+                        <Button
                           variant="outline"
                           onClick={() => handleContact(favorite.id)}
                         >
                           <MessageSquare className="mr-2 h-4 w-4" />
                           Contatar
                         </Button>
-                        
-                        <Button 
+
+                        <Button
                           variant="outline"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => handleRemove(favorite.id)}
+                          onClick={() => handleRemoveFavorite(favorite.id)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Remover
@@ -183,10 +252,12 @@ const ManagerFavorites = () => {
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-8 text-center">
               <Star className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium">Nenhum favorito encontrado</h3>
+              <h3 className="text-lg font-medium">
+                Nenhum favorito encontrado
+              </h3>
               <p className="text-sm text-muted-foreground">
-                {statusFilter === "all" 
-                  ? "Você ainda não adicionou nenhum talento aos seus favoritos." 
+                {statusFilter === "all"
+                  ? "Você ainda não adicionou nenhum talento aos seus favoritos."
                   : "Nenhum talento encontrado com o status selecionado."}
               </p>
             </CardContent>
