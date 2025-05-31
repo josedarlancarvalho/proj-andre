@@ -172,11 +172,6 @@ const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
             label: "Perfil da Empresa",
             icon: <Building className="h-4 w-4" />,
           },
-          {
-            path: "/rh/relatorios",
-            label: "Relatórios",
-            icon: <FileText className="h-4 w-4" />,
-          },
         ];
       case "gestor":
         return [

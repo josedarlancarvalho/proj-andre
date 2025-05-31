@@ -42,9 +42,6 @@ import HRMessages from "@/pages/hr/HRMessages";
 import ManagerExplore from "@/pages/manager/ManagerExplore";
 import ManagerFavorites from "@/pages/manager/ManagerFavorites";
 
-// Páginas de relatórios
-import HRReports from "@/pages/hr/HRReports";
-
 // Páginas de entrevistas e empresa
 import ManagerInterviews from "@/pages/manager/ManagerInterviews";
 import ManagerCompany from "@/pages/manager/ManagerCompany";
@@ -202,14 +199,6 @@ const App = () => {
             element={
               <ProtectedRoute requiredProfileType="rh">
                 <HRMessages />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/rh/relatorios"
-            element={
-              <ProtectedRoute requiredProfileType="rh">
-                <HRReports />
               </ProtectedRoute>
             }
           />

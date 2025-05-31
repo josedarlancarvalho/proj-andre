@@ -117,12 +117,6 @@ const rhService = {
     return response.data;
   },
 
-  // Estatísticas
-  buscarEstatisticas: async () => {
-    const response = await api.get("/rh/estatisticas");
-    return response.data;
-  },
-
   // Perfil e Onboarding
   buscarPerfil: async () => {
     const response = await api.get("/rh/perfil");
