@@ -1,0 +1,137 @@
+# Documentação do Projeto SimplyInvite
+
+## Visão Geral
+
+O SimplyInvite é uma plataforma de conexão entre talentos (jovens), empresas (RH) e gestores, permitindo avaliação, seleção e acompanhamento de projetos e perfis. O sistema é composto por um frontend moderno em React + Vite e um backend robusto em Java Spring Boot, com persistência em PostgreSQL.
+
+---
+
+## Tecnologias Utilizadas
+
+### Frontend
+- **React** (com TypeScript)
+- **Vite** (build e dev server)
+- **Tailwind CSS** (estilização)
+- **shadcn-ui** (componentes UI)
+- **Axios** (requisições HTTP)
+- **React Router** (roteamento)
+- **React Hook Form + Zod** (formulários e validação)
+- **Sonner** (notificações)
+
+### Backend
+- **Java 17**
+- **Spring Boot 3**
+- **Spring Data JPA** (persistência)
+- **Spring Security** (autenticação e autorização)
+- **JWT (jjwt)** (autenticação baseada em token)
+- **PostgreSQL** (banco de dados relacional)
+- **H2** (opcional para testes)
+- **Maven** (build e dependências)
+
+### DevOps
+- **Docker** (containerização)
+- **Docker Compose** (orquestração de containers)
+
+---
+
+## Estrutura de Pastas
+
+```
+simplyinvite-showcase-page/
+├── backend/           # Backend Java Spring Boot
+│   ├── src/main/java/com/simplyinvite_showcase_page/backend/
+│   │   ├── modelos/          # Entidades JPA (Usuario, Projeto, Avaliacao, Empresa)
+│   │   ├── repositorios/     # Repositórios JPA
+│   │   ├── servicos/         # Serviços de negócio
+│   │   ├── controladores/    # Controllers REST
+│   │   ├── dtos/             # Data Transfer Objects
+│   │   └── seguranca/        # JWT, filtros e configuração de segurança
+│   ├── resources/
+│   │   └── application.properties # Configuração do banco e Spring
+│   └── pom.xml
+├── frontend/          # Frontend React + Vite
+│   ├── src/
+│   │   ├── components/        # Componentes reutilizáveis
+│   │   ├── pages/             # Páginas da aplicação
+│   │   ├── contexts/          # Contextos React (ex: AuthContext)
+│   │   ├── hooks/             # Hooks customizados
+│   │   ├── lib/               # Bibliotecas utilitárias
+│   │   └── servicos/          # Serviços para consumir a API
+│   ├── public/                # Arquivos estáticos
+│   └── package.json
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## Funcionalidades Principais
+
+- **Cadastro e Login** de três tipos de usuários: Jovem Talento, RH e Gestor
+- **Autenticação JWT**: login retorna token, rotas protegidas exigem token
+- **CRUD de Usuários, Projetos, Avaliações e Empresas**
+- **Avaliação de projetos** por RH
+- **Favoritar talentos** (Gestor)
+- **Onboarding e perfil detalhado** para cada tipo de usuário
+- **Painéis personalizados** para cada perfil
+- **Notificações e feedbacks**
+- **Proteção de rotas no frontend e backend**
+
+---
+
+## Fluxo de Autenticação
+
+1. Usuário faz login pelo frontend
+2. Frontend envia email/senha para `/api/auth/login`
+3. Backend valida, gera JWT e retorna para o frontend
+4. Frontend armazena o token e envia em todas as requisições protegidas
+5. Backend valida o token em cada requisição
+
+---
+
+## Endpoints REST (Principais)
+
+- `POST /api/auth/login` — Login e geração de JWT
+- `POST /api/usuarios` — Cadastro de usuário
+- `GET /api/usuarios` — Listar usuários
+- `POST /api/projetos` — Criar projeto
+- `GET /api/projetos` — Listar projetos
+- `POST /api/avaliacoes` — Criar avaliação
+- `GET /api/avaliacoes` — Listar avaliações
+- `POST /api/empresas` — Criar empresa
+- `GET /api/empresas` — Listar empresas
+
+---
+
+## Integração Frontend x Backend
+
+- Serviços em `frontend/src/servicos/` centralizam as chamadas HTTP
+- AuthContext gerencia login, logout, cadastro e perfil do usuário
+- Token JWT salvo no localStorage e enviado automaticamente via axios
+- Rotas protegidas no frontend usam o contexto de autenticação
+
+---
+
+## Como rodar o projeto
+
+1. **Backend:**
+   - Configure o banco PostgreSQL (ajuste usuário/senha em `application.properties`)
+   - Rode: `mvnw spring-boot:run`
+2. **Frontend:**
+   - Instale dependências: `npm install`
+   - Rode: `npm run dev`
+3. **Acesse:**
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:8080
+
+---
+
+## Observações Finais
+
+- O projeto está pronto para evoluir com novas regras de negócio, integrações e melhorias de UI/UX.
+- O uso de JWT garante segurança e escalabilidade.
+- A estrutura modular facilita manutenção e crescimento.
+
+---
+
+Documentação gerada automaticamente por GitHub Copilot em 16/05/2025.

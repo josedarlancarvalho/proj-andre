@@ -1,0 +1,15 @@
+{
+  "name": "simplyinvite-showcase-page",
+  "version": "1.0.0",
+  "description": "- Docker Desktop\r - Node.js (para desenvolvimento local)\r - Git",
+  "main": "eslint.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "simplyinvite-showcase-page": "file:"
+  }
+}
