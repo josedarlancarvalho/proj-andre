@@ -55,7 +55,7 @@ interface HRPendingProjectDetail {
   descricao?: string;
   tecnologias?: string[];
   linkRepositorio?: string;
-  linkDeploy?: string;
+  linkYoutube?: string;
 }
 
 interface ProjetoAvaliacao {
@@ -118,7 +118,7 @@ const HRPendingProjects = () => {
           descricao: project.descricao,
           tecnologias: project.tecnologias,
           linkRepositorio: project.linkRepositorio,
-          linkDeploy: project.linkDeploy,
+          linkYoutube: project.linkYoutube,
           city: project.usuario?.cidade || "",
         }));
 
@@ -375,16 +375,16 @@ const HRPendingProjects = () => {
               </div>
             )}
 
-            {selectedProject?.linkDeploy && (
+            {selectedProject?.linkYoutube && (
               <div className="space-y-2">
-                <h4 className="font-medium">Link de Demonstração</h4>
+                <h4 className="font-medium">Link do YouTube</h4>
                 <a
-                  href={selectedProject.linkDeploy}
+                  href={selectedProject.linkYoutube}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-600 hover:underline flex items-center"
                 >
-                  {selectedProject.linkDeploy}
+                  {selectedProject.linkYoutube}
                   <ExternalLink className="ml-1 h-3 w-3" />
                 </a>
               </div>

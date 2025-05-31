@@ -7,13 +7,14 @@ interface Projeto {
   descricao: string;
   tecnologias: string[];
   linkRepositorio?: string;
-  linkDeploy?: string;
+  linkYoutube?: string;
   status: "pendente" | "avaliado" | "destacado";
   usuarioId: number;
-  autor?: {
+  usuario?: {
     id: number;
     nomeCompleto: string;
     email: string;
+    cidade?: string;
   };
   createdAt?: string;
   updatedAt?: string;
