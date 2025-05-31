@@ -21,6 +21,7 @@ export interface Usuario {
   collegeType?: string;
   experienceDescription?: string;
   specialBadge?: string;
+  username?: string;
 
   // Campos do onboarding
   studyDetails?: {
