@@ -200,6 +200,7 @@ const TalentSubmissions = () => {
     // Encontrar o projeto selecionado
     const projeto = projects.find((p) => p.id === id);
     if (projeto) {
+      console.log("Dados do projeto selecionado:", projeto);
       setSelectedProject(projeto);
       setIsDetailsDialogOpen(true);
     }

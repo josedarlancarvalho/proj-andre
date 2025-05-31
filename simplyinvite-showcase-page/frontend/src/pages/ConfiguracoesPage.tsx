@@ -38,6 +38,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Componente de Seção de Configurações
 const ConfigSection = ({
@@ -89,6 +90,7 @@ const ConfigItem = ({
 
 const ConfiguracoesPage = () => {
   const { profileType, user, signOut } = useAuth();
+  const { theme, setTheme, toggleTheme } = useTheme();
 
   // Estados para controlar as configurações
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -459,7 +461,7 @@ const ConfiguracoesPage = () => {
                     title="Modo escuro"
                     description="Ative o modo escuro para menos brilho"
                   >
-                    <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                    <Switch checked={theme === 'dark'} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
                   </ConfigItem>
                 </ConfigSection>
 

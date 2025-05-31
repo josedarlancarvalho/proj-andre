@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap');
 
 @tailwind base;
@@ -36,6 +35,36 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%; /* Dark background */
+    --foreground: 210 40% 98%; /* Light text */
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 168 100% 32%; /* Adjusted primary for dark mode */
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 168 65% 30%; /* Adjusted secondary for dark mode */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 16.1%; /* Adjusted muted for dark mode */
+    --muted-foreground: 215.4 16.3% 66.9%; /* Adjusted muted foreground for dark mode */
+
+    --accent: 168 100% 32%; /* Adjusted accent for dark mode */
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 64.2% 50.2%; /* Adjusted destructive for dark mode */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215.4 16.3% 36.9%; /* Adjusted border for dark mode */
+    --input: 215.4 16.3% 36.9%; /* Adjusted input for dark mode */
+    --ring: 215.4 16.3% 46.9%; /* Adjusted ring for dark mode */
   }
 }
 
