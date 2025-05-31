@@ -31,6 +31,14 @@ interface Feedback {
   text: string;
   category: string;
   isNew: boolean;
+  // Adicionar campos para feedbacks do RH
+  nota?: number;
+  medalha?: "ouro" | "prata" | "bronze";
+  // Adicionar campos para feedbacks do Gestor
+  oportunidade?: {
+    tipo: "estagio" | "trainee" | "junior";
+    descricao: string;
+  };
 }
 
 interface Invite {
@@ -141,6 +149,11 @@ const TalentPanel = () => {
             text: feedback.comentario,
             category: "Feedback",
             isNew: false,
+            // Adicionar campos para feedbacks do RH
+            nota: feedback.nota,
+            medalha: feedback.medalha,
+            // Adicionar campos para feedbacks do Gestor
+            oportunidade: feedback.oportunidade,
           }));
           setFeedbacks(feedbacksMapeados);
 
