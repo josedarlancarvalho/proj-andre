@@ -77,11 +77,9 @@ const UserPanelLayout = ({ children, userType }: UserPanelLayoutProps) => {
   // Buscar contagem de notificações não lidas quando o usuário mudar
   useEffect(() => {
     if (user?.id) {
-      // Verifica se o usuário é novo (criado nos últimos 3 dias)
-      const isNewUser = user.createdAt
-        ? new Date().getTime() - new Date(user.createdAt).getTime() <
-          3 * 24 * 60 * 60 * 1000
-        : true;
+      // Simplificando a lógica de verificação de usuário novo
+      // Por enquanto, vamos considerar todos como usuários existentes
+      const isNewUser = false;
 
       fetchUnreadNotificationsCount(user.id, isNewUser)
         .then((count) => setUnreadNotifications(count))
