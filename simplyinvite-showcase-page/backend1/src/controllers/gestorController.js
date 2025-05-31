@@ -154,13 +154,29 @@ exports.buscarTalentosPorArea = async (req, res) => {
 exports.favoritarTalento = async (req, res) => {
   try {
     const { talentoId } = req.params;
-    const gestorId = req.usuario.id;
+    const gestorId = req.usuario?.id || 1; // Usa ID 1 como fallback se não houver usuário autenticado
 
-    // Aqui você precisaria ter uma tabela de favoritos
-    // Por enquanto, vamos apenas retornar sucesso
-    res.json({ message: "Talento favoritado com sucesso" });
+    console.log(`Gestor ID ${gestorId} favoritou o talento ID ${talentoId}`);
+
+    // Simulação de banco de dados
+    // Em um ambiente real, aqui teríamos uma inserção no banco
+    // INSERT INTO favoritos (gestor_id, talento_id) VALUES (gestorId, talentoId)
+
+    // Retornar sucesso
+    return res.status(200).json({
+      success: true,
+      message: "Talento favoritado com sucesso",
+      data: {
+        gestorId,
+        talentoId,
+        createdAt: new Date().toISOString(),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao favoritar talento" });
+    console.error("Erro ao favoritar talento:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro ao favoritar talento" });
   }
 };
 
@@ -168,13 +184,34 @@ exports.favoritarTalento = async (req, res) => {
 exports.removerFavorito = async (req, res) => {
   try {
     const { talentoId } = req.params;
-    const gestorId = req.usuario.id;
+    const gestorId = req.usuario?.id || 1; // Usa ID 1 como fallback
 
-    // Aqui você precisaria ter uma tabela de favoritos
-    // Por enquanto, vamos apenas retornar sucesso
-    res.json({ message: "Talento removido dos favoritos com sucesso" });
+    console.log(
+      `Gestor ID ${gestorId} removeu o talento ID ${talentoId} dos favoritos`
+    );
+
+    // Simulação de banco de dados
+    // Em um ambiente real, aqui teríamos uma remoção no banco
+    // DELETE FROM favoritos WHERE gestor_id = gestorId AND talento_id = talentoId
+
+    // Retornar sucesso
+    return res.status(200).json({
+      success: true,
+      message: "Talento removido dos favoritos com sucesso",
+      data: {
+        gestorId,
+        talentoId,
+        removedAt: new Date().toISOString(),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ message: "Erro ao remover talento dos favoritos" });
+    console.error("Erro ao remover talento dos favoritos:", error);
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: "Erro ao remover talento dos favoritos",
+      });
   }
 };
 

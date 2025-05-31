@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, User, Edit, Trash2, Video, MapPin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -11,264 +28,514 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  User,
+  Video,
+  MapPin,
+} from "lucide-react";
+import { buscarEntrevistas, agendarEntrevista } from "@/servicos/entrevistas";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useLocation, useSearchParams } from "react-router-dom";
 
-// Interface for Interview
-interface Interview {
-  id: string;
-  candidate: string;
-  date: string; // Format DD/MM/YYYY
-  time: string; // Format HH:MM
-  type: "online" | "presencial";
-  position: string;
-  status: "agendado" | "confirmado" | "pendente" | "concluido" | "cancelado" | string; // Allow string for other potential statuses
-  location?: string; // Optional for presencial
-}
+const formSchema = z.object({
+  candidato: z.string().min(1, "Nome do candidato é obrigatório"),
+  candidatoId: z.string().optional(),
+  data: z.date({
+    required_error: "Data da entrevista é obrigatória",
+  }),
+  hora: z.string().min(1, "Horário é obrigatório"),
+  tipo: z.enum(["online", "presencial"], {
+    required_error: "Tipo de entrevista é obrigatório",
+  }),
+  link: z.string().optional(),
+  endereco: z.string().optional(),
+});
 
 const ManagerInterviews = () => {
-  const [userName, setUserName] = useState("Carregando...");
-  const [interviewsList, setInterviewsList] = useState<Interview[]>([]);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [selectedDate, setSelectedDate] = useState(new Date()); // For calendar selection
+  const { user } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [entrevistas, setEntrevistas] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isAgendarDialogOpen, setIsAgendarDialogOpen] = useState(false);
+  const [entrevistasDoDia, setEntrevistasDoDia] = useState([]);
+  const [candidatoId, setCandidatoId] = useState<string | null>(null);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      candidato: "",
+      candidatoId: "",
+      hora: "09:00",
+      tipo: "online",
+      link: "",
+      endereco: "",
+    },
+  });
 
   useEffect(() => {
-    // TODO: Replace with actual API calls
-    const fetchInterviewsData = async () => {
-      // Simulate fetching user name
-      // const userResponse = await fetch("/api/manager/user-info");
-      // const userData = await userResponse.json();
-      // setUserName(userData.name);
-      setUserName("Rodrigo Mendes"); // Placeholder
-
-      // Simulate fetching interviews
-      // const interviewsResponse = await fetch("/api/manager/interviews");
-      // const interviewsData = await interviewsResponse.json();
-      // setInterviewsList(interviewsData);
-      setInterviewsList([]); // Initialize with empty or fetched data
+    const fetchEntrevistas = async () => {
+      try {
+        setLoading(true);
+        const response = await buscarEntrevistas();
+        setEntrevistas(response);
+      } catch (error) {
+        console.error("Erro ao buscar entrevistas:", error);
+        toast.error("Não foi possível carregar as entrevistas");
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchInterviewsData();
+
+    fetchEntrevistas();
   }, []);
 
-  const handleReschedule = (id: string) => {
-    console.log("Reschedule", id);
-  };
+  useEffect(() => {
+    if (date && entrevistas.length > 0) {
+      const formattedDate = format(date, "yyyy-MM-dd");
+      const filtradas = entrevistas.filter((entrevista) => {
+        // Verificar se temos a data no formato apropriado
+        const entrevistaData =
+          entrevista.data?.substring(0, 10) ||
+          (entrevista.data instanceof Date
+            ? format(entrevista.data, "yyyy-MM-dd")
+            : "");
+        return entrevistaData === formattedDate;
+      });
+      setEntrevistasDoDia(filtradas);
+    } else {
+      setEntrevistasDoDia([]);
+    }
+  }, [date, entrevistas]);
 
-  const handleCancel = (id: string) => {
-    console.log("Cancel", id);
-  };
+  // Verificar se há parâmetros na URL para preencher o formulário
+  useEffect(() => {
+    const candidato = searchParams.get("candidato");
+    const id = searchParams.get("id");
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "agendado":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">Agendado</Badge>;
-      case "confirmado":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">Confirmado</Badge>;
-      case "pendente":
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">Aguardando Confirmação</Badge>;
-      case "concluido":
-        return <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-300">Concluído</Badge>;
-      case "cancelado":
-        return <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-300">Cancelado</Badge>;
-      default:
-        return <Badge variant="outline">-</Badge>;
+    if (candidato) {
+      form.setValue("candidato", candidato);
+
+      // Se houver um ID, armazenar para uso posterior
+      if (id) {
+        setCandidatoId(id);
+        form.setValue("candidatoId", id);
+        console.log("ID do candidato para agendamento:", id);
+      }
+
+      // Abrir automaticamente o modal de agendamento
+      setIsAgendarDialogOpen(true);
+    }
+  }, [searchParams, form]);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // Verificar se temos um ID de candidato
+      if (!values.candidatoId && !candidatoId) {
+        toast.error(
+          "ID do candidato não encontrado. Por favor, tente novamente."
+        );
+        return;
+      }
+
+      const talentoId = values.candidatoId || candidatoId;
+
+      // Prepara o objeto para o novo serviço de entrevistas
+      const entrevistaDados = {
+        talentoId: talentoId!,
+        talentoNome: values.candidato,
+        data: format(values.data, "yyyy-MM-dd"),
+        hora: values.hora,
+        tipo: values.tipo,
+        local: values.tipo === "presencial" ? values.endereco : undefined,
+        link: values.tipo === "online" ? values.link : undefined,
+        observacoes: "",
+      };
+
+      console.log("Agendando entrevista com dados:", entrevistaDados);
+
+      // Usar o toast.promise para mostrar o status do agendamento
+      await toast.promise(agendarEntrevista(entrevistaDados), {
+        loading: "Agendando entrevista...",
+        success: "Entrevista agendada com sucesso!",
+        error: "Não foi possível agendar a entrevista",
+      });
+
+      setIsAgendarDialogOpen(false);
+
+      // Recarregar entrevistas
+      const response = await buscarEntrevistas();
+      setEntrevistas(response);
+
+      // Limpar formulário e estados
+      form.reset();
+      setCandidatoId(null);
+    } catch (error) {
+      console.error("Erro ao agendar entrevista:", error);
     }
   };
 
-  // Get dates for the calendar view
-  const today = new Date();
-  const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const weekDates = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(selectedDate); // Use selectedDate for calendar navigation if implemented
-    date.setDate(selectedDate.getDate() - selectedDate.getDay() + i); // Start week from Sunday of selectedDate's week
-    return {
-      day: weekdays[date.getDay()],
-      date: date.getDate(),
-      month: date.getMonth() + 1,
-      fullDate: date, // Store full date object for easier comparison
-      isToday: date.toDateString() === today.toDateString(),
-      isSelected: date.toDateString() === selectedDate.toDateString(),
-    };
-  });
+  const getDayLabel = () => {
+    if (!date) return "Selecione uma data";
+    return format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
+  };
 
-  // Filter interviews for the selectedDate in calendar
-  const selectedDateFormatted = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
-  const interviewsForSelectedDate = interviewsList.filter(interview => {
-    // Assuming interview.date is DD/MM/YYYY
-    return interview.date === selectedDateFormatted;
-  });
-  
-  // Filter for "Todas as Entrevistas" section based on filterStatus
-  const filteredAllInterviews = interviewsList.filter(interview => {
-    if (filterStatus === "all") return true;
-    if (filterStatus === "upcoming") {
-        // Basic upcoming: today or later. More complex logic might be needed.
-        const [day, month, year] = interview.date.split('/').map(Number);
-        const interviewDate = new Date(year, month - 1, day);
-        return interviewDate >= today && (interview.status === "agendado" || interview.status === "confirmado" || interview.status === "pendente");
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      // Reset form and state when dialog is closed
+      form.reset({
+        candidato: "",
+        candidatoId: "",
+        hora: "09:00",
+        tipo: "online",
+        link: "",
+        endereco: "",
+      });
+      setCandidatoId(null);
     }
-    return interview.status === filterStatus;
-  });
+
+    setIsAgendarDialogOpen(open);
+  };
 
   return (
     <UserPanelLayout userType="gestor">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Entrevistas Agendadas</h1>
-          
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas Entrevistas</SelectItem>
-              <SelectItem value="upcoming">Próximas</SelectItem>
-              <SelectItem value="confirmado">Confirmadas</SelectItem>
-              <SelectItem value="pendente">Aguardando</SelectItem>
-              <SelectItem value="agendado">Agendadas</SelectItem>
-              <SelectItem value="concluido">Concluídas</SelectItem>
-              <SelectItem value="cancelado">Canceladas</SelectItem>
-            </SelectContent>
-          </Select>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Entrevistas Agendadas
+          </h1>
+          <Button onClick={() => setIsAgendarDialogOpen(true)}>
+            Agendar Nova Entrevista
+          </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="mr-2 h-5 w-5" />
-              Calendário de Entrevistas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex overflow-x-auto pb-2 mb-4">
-              {weekDates.map((day, i) => (
-                <div 
-                  key={i}
-                  className={`flex-shrink-0 w-20 h-24 border rounded-lg flex flex-col items-center justify-center mx-1 cursor-pointer hover:bg-muted/50 ${
-                    day.isSelected ? "border-primary bg-primary/10" : day.isToday ? "border-gray-400 bg-gray-50" : ""
-                  }`}
-                  onClick={() => setSelectedDate(day.fullDate)}
-                >
-                  <div className="text-sm font-medium">{day.day}</div>
-                  <div className={`text-2xl font-bold ${day.isSelected ? "text-primary" : ""}`}>{day.date}</div>
-                  <div className="text-xs text-muted-foreground">{day.month < 10 ? `0${day.month}` : day.month}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-medium">{selectedDate.toDateString() === today.toDateString() ? "Hoje" : selectedDateFormatted}, {weekdays[selectedDate.getDay()]}</h3>
-              
-              {interviewsForSelectedDate.length > 0 ? (
-                interviewsForSelectedDate.map((interview) => (
-                  <div 
-                    key={interview.id}
-                    className="flex items-center p-3 border rounded-lg hover:bg-muted/50"
-                  >
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                      <Clock className="h-6 w-6 text-primary" />
+        <Tabs defaultValue="calendario">
+          <TabsList>
+            <TabsTrigger value="calendario">Calendário</TabsTrigger>
+            <TabsTrigger value="todas">Todas Entrevistas</TabsTrigger>
+          </TabsList>
+          <TabsContent value="calendario" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-7 lg:grid-cols-3">
+              <Card className="col-span-2 md:col-span-3 lg:col-span-1">
+                <CardHeader>
+                  <CardTitle>Calendário de Entrevistas</CardTitle>
+                </CardHeader>
+                <CardContent className="flex justify-center">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="rounded-md border"
+                  />
+                </CardContent>
+              </Card>
+              <Card className="col-span-5 md:col-span-4 lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Entrevistas para {getDayLabel()}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-10">
+                      Carregando entrevistas...
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{interview.candidate}</h4>
-                      <div className="text-sm text-muted-foreground">
-                        {interview.time} - {interview.position}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(interview.status)}
-                      {interview.type === "online" ? (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Video className="h-3 w-3" /> Online
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" /> Presencial
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8 border rounded-lg bg-muted/10">
-                  <p className="text-muted-foreground">Nenhuma entrevista para a data selecionada.</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Todas as Entrevistas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {filteredAllInterviews.length > 0 ? (
-              <div className="space-y-4">
-                {filteredAllInterviews.map((interview) => (
-                  <div key={interview.id} className="border rounded-lg p-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-5 w-5 text-muted-foreground" />
-                          <h3 className="font-medium text-lg">{interview.candidate}</h3>
-                          {getStatusBadge(interview.status)}
-                        </div>
-                        
-                        <div className="mt-2 space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>{interview.date} às {interview.time}</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-sm">
-                            {interview.type === "online" ? (
-                              <>
-                                <Video className="h-4 w-4 text-muted-foreground" />
-                                <span>Entrevista Online</span>
-                              </>
+                  ) : entrevistasDoDia.length > 0 ? (
+                    <div className="space-y-4">
+                      {entrevistasDoDia.map((entrevista, index) => (
+                        <div
+                          key={entrevista.id || index}
+                          className="flex items-start space-x-4 border rounded-md p-4"
+                        >
+                          <div className="bg-primary/10 p-2 rounded-full">
+                            {entrevista.tipo === "online" ? (
+                              <Video className="h-5 w-5 text-primary" />
                             ) : (
-                              <>
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span>{interview.location}</span>
-                              </>
+                              <MapPin className="h-5 w-5 text-primary" />
                             )}
                           </div>
-                          
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Cargo: </span>
-                            <span>{interview.position}</span>
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <div>
+                                <h3 className="font-medium">
+                                  {entrevista.candidato}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {entrevista.hora}
+                                </p>
+                              </div>
+                              <Badge>
+                                {entrevista.tipo === "online"
+                                  ? "Online"
+                                  : "Presencial"}
+                              </Badge>
+                            </div>
+                            {entrevista.detalhes && (
+                              <div className="mt-2 text-sm">
+                                {entrevista.tipo === "online" ? (
+                                  <p>
+                                    <span className="font-medium">Link: </span>
+                                    <a
+                                      href={entrevista.detalhes.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline"
+                                    >
+                                      {entrevista.detalhes.link}
+                                    </a>
+                                  </p>
+                                ) : (
+                                  <p>
+                                    <span className="font-medium">
+                                      Endereço:{" "}
+                                    </span>
+                                    {entrevista.detalhes.endereco}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2 min-w-[200px]">
-                        <Button 
-                          variant="outline" 
-                          className="flex-1"
-                          onClick={() => handleReschedule(interview.id)}
-                        >
-                          <Edit className="mr-2 h-4 w-4" />
-                          Reagendar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="flex-1 text-destructive hover:text-destructive"
-                          onClick={() => handleCancel(interview.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Cancelar
-                        </Button>
-                      </div>
+                      ))}
                     </div>
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground">
+                        Nenhuma entrevista agendada para este dia.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => setIsAgendarDialogOpen(true)}
+                      >
+                        Agendar Entrevista
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          <TabsContent value="todas">
+            <Card>
+              <CardHeader>
+                <CardTitle>Todas as Entrevistas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-10">
+                    Carregando entrevistas...
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10 text-muted-foreground">
-                Nenhuma entrevista encontrada para os filtros aplicados.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : entrevistas.length > 0 ? (
+                  <div className="space-y-4">
+                    {entrevistas.map((entrevista, index) => (
+                      <div
+                        key={entrevista.id || index}
+                        className="flex items-start space-x-4 border rounded-md p-4"
+                      >
+                        <div className="bg-primary/10 p-2 rounded-full">
+                          {entrevista.tipo === "online" ? (
+                            <Video className="h-5 w-5 text-primary" />
+                          ) : (
+                            <MapPin className="h-5 w-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between">
+                            <div>
+                              <h3 className="font-medium">
+                                {entrevista.candidato}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {format(
+                                  new Date(entrevista.data),
+                                  "dd/MM/yyyy"
+                                )}{" "}
+                                às {entrevista.hora}
+                              </p>
+                            </div>
+                            <Badge>
+                              {entrevista.tipo === "online"
+                                ? "Online"
+                                : "Presencial"}
+                            </Badge>
+                          </div>
+                          {entrevista.detalhes && (
+                            <div className="mt-2 text-sm">
+                              {entrevista.tipo === "online" ? (
+                                <p>
+                                  <span className="font-medium">Link: </span>
+                                  <a
+                                    href={entrevista.detalhes.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {entrevista.detalhes.link}
+                                  </a>
+                                </p>
+                              ) : (
+                                <p>
+                                  <span className="font-medium">
+                                    Endereço:{" "}
+                                  </span>
+                                  {entrevista.detalhes.endereco}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10">
+                    <p className="text-muted-foreground">
+                      Nenhuma entrevista agendada.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => setIsAgendarDialogOpen(true)}
+                    >
+                      Agendar Entrevista
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
+
+      <Dialog open={isAgendarDialogOpen} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Agendar Nova Entrevista</DialogTitle>
+            <DialogDescription>
+              Preencha os dados para agendar uma entrevista com um candidato.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="candidato"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Candidato</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nome do candidato" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="data"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data</FormLabel>
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hora"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horário</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tipo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Entrevista</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="presencial">Presencial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("tipo") === "online" ? (
+                <FormField
+                  control={form.control}
+                  name="link"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link da reunião</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Link da reunião" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="endereco"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Endereço</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Endereço" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              <DialogFooter className="pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleDialogOpenChange(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit">Agendar Entrevista</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </UserPanelLayout>
   );
 };

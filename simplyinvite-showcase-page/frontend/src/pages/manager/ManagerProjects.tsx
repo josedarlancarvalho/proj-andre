@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import UserPanelLayout from "@/components/UserPanelLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye, MessageSquare, Award, ExternalLink } from "lucide-react";
+import {
+  Search,
+  Eye,
+  MessageSquare,
+  Award,
+  ExternalLink,
+  Star,
+  Calendar,
+  Heart,
+  Mail,
+} from "lucide-react";
 import ProjectCard from "@/components/panels/ProjectCard";
 import { useAuth } from "@/contexts/AuthContext";
-import gestorService from "@/servicos/gestor";
+import gestorService, { favoritarTalento } from "@/servicos/gestor";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -20,6 +30,21 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Interface para projetos avaliados
 interface ProjetoAvaliado {
@@ -59,6 +84,15 @@ interface ProjetoAvaliado {
   }>;
 }
 
+/**
+ * Componente ManagerProjects
+ *
+ * Este componente exibe projetos avaliados pelo RH para que o gestor possa:
+ * 1. Visualizar detalhes dos projetos
+ * 2. Favoritar o autor do projeto
+ * 3. Agendar entrevistas com o autor
+ * 4. Adicionar feedback e oportunidades
+ */
 const ManagerProjects = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -76,6 +110,13 @@ const ManagerProjects = () => {
   const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [oportunidade, setOportunidade] = useState<{
+    tipo: "estagio" | "trainee" | "junior" | "";
+    descricao: string;
+  }>({ tipo: "", descricao: "" });
+  const [incluirOportunidade, setIncluirOportunidade] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -137,6 +178,19 @@ const ManagerProjects = () => {
     setFilteredProjects(filtered);
   }, [searchQuery, projects]);
 
+  // Limpar estados quando os diálogos são fechados
+  useEffect(() => {
+    if (!isDetailsDialogOpen) {
+      // Nada a limpar aqui, pois o selectedProject é necessário para o feedback
+    }
+
+    if (!isFeedbackDialogOpen) {
+      setFeedback("");
+      setOportunidade({ tipo: "", descricao: "" });
+      setIncluirOportunidade(false);
+    }
+  }, [isDetailsDialogOpen, isFeedbackDialogOpen]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // A filtragem é feita no useEffect
@@ -150,21 +204,94 @@ const ManagerProjects = () => {
   const handleAddFeedback = (project: ProjetoAvaliado) => {
     setSelectedProject(project);
     setFeedback("");
+    setOportunidade({ tipo: "", descricao: "" });
+    setIncluirOportunidade(false);
     setIsFeedbackDialogOpen(true);
   };
 
+  /**
+   * Favorita o autor do projeto
+   */
+  const handleFavoriteProject = async (project: ProjetoAvaliado) => {
+    if (!project.autorId) {
+      toast.error("Não foi possível identificar o autor do projeto");
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      await favoritarTalento(project.autorId.toString());
+      toast.success("Autor adicionado aos favoritos!");
+
+      // Atualizar contador de favoritos no painel principal (em implementação futura)
+    } catch (error) {
+      console.error("Erro ao favoritar projeto:", error);
+      toast.error("Não foi possível adicionar aos favoritos");
+    } finally {
+      setFavoriteLoading(false);
+      // Não fechamos nenhum diálogo aqui
+    }
+  };
+
+  /**
+   * Navega para a página de entrevistas com os dados do autor pré-preenchidos
+   */
+  const handleScheduleInterview = (project: ProjetoAvaliado) => {
+    if (!project.autorId) {
+      toast.error("Não foi possível identificar o autor do projeto");
+      return;
+    }
+
+    // Aqui estamos armazenando o ID real do usuário para ser usado na API
+    navigate(
+      `/gestor/entrevistas?candidato=${encodeURIComponent(
+        project.autor || "Candidato"
+      )}&id=${project.autorId}`
+    );
+    toast.success("Redirecionando para agendamento de entrevista");
+  };
+
+  /**
+   * Envia feedback para o projeto, opcionalmente com uma oportunidade
+   */
   const handleSubmitFeedback = async () => {
     if (!selectedProject || !feedback.trim()) {
       toast.error("Por favor, adicione um feedback antes de enviar");
       return;
     }
 
+    // Validar oportunidade se estiver selecionada
+    if (incluirOportunidade) {
+      if (!oportunidade.tipo) {
+        toast.error("Por favor, selecione o tipo de oportunidade");
+        return;
+      }
+      if (!oportunidade.descricao.trim()) {
+        toast.error("Por favor, adicione uma descrição para a oportunidade");
+        return;
+      }
+    }
+
     setIsSubmittingFeedback(true);
 
     try {
-      await gestorService.enviarFeedback(parseInt(selectedProject.id), {
+      // Preparar objeto de feedback com ou sem oportunidade
+      const feedbackData: any = {
         comentario: feedback,
-      });
+      };
+
+      // Adicionar oportunidade se a opção estiver marcada
+      if (incluirOportunidade) {
+        feedbackData.oportunidade = {
+          tipo: oportunidade.tipo,
+          descricao: oportunidade.descricao,
+        };
+      }
+
+      await gestorService.enviarFeedback(
+        parseInt(selectedProject.id),
+        feedbackData
+      );
 
       toast.success("Feedback enviado com sucesso!");
       setIsFeedbackDialogOpen(false);
@@ -195,6 +322,11 @@ const ManagerProjects = () => {
     } finally {
       setIsSubmittingFeedback(false);
     }
+  };
+
+  const handleContactAuthor = (project: ProjetoAvaliado) => {
+    // Implementação futura para contato direto
+    toast.info("Funcionalidade de contato em desenvolvimento");
   };
 
   return (
@@ -464,22 +596,96 @@ const ManagerProjects = () => {
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDetailsDialogOpen(false)}
-            >
-              Fechar
-            </Button>
-            <Button
-              onClick={() => {
-                setIsDetailsDialogOpen(false);
-                handleAddFeedback(selectedProject!);
-              }}
-            >
-              Adicionar Feedback
-            </Button>
-          </DialogFooter>
+          <div className="flex justify-between mt-4 pt-2 border-t">
+            <div className="flex gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (selectedProject) {
+                          handleFavoriteProject(selectedProject);
+                        }
+                      }}
+                      disabled={favoriteLoading}
+                      className="h-9 w-9"
+                    >
+                      <Heart className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Favoritar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (selectedProject) {
+                          handleScheduleInterview(selectedProject);
+                        }
+                      }}
+                      className="h-9 w-9"
+                    >
+                      <Calendar className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Agendar Entrevista</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (selectedProject) {
+                          handleContactAuthor(selectedProject);
+                        }
+                      }}
+                      className="h-9 w-9"
+                    >
+                      <Mail className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Contatar</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            <div className="flex">
+              <Button
+                variant="outline"
+                onClick={() => setIsDetailsDialogOpen(false)}
+                className="mr-2"
+              >
+                Fechar
+              </Button>
+
+              <Button
+                onClick={() => {
+                  setIsDetailsDialogOpen(false);
+                  handleAddFeedback(selectedProject!);
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Adicionar Feedback
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -506,8 +712,67 @@ const ManagerProjects = () => {
                 onChange={(e) => setFeedback(e.target.value)}
               />
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="incluir-oportunidade"
+                checked={incluirOportunidade}
+                onCheckedChange={(checked) => {
+                  setIncluirOportunidade(checked === true);
+                }}
+              />
+              <label
+                htmlFor="incluir-oportunidade"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Incluir oportunidade para este candidato
+              </label>
+            </div>
+
+            {incluirOportunidade && (
+              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                <div className="space-y-2">
+                  <Label htmlFor="tipo-oportunidade">
+                    Tipo de Oportunidade
+                  </Label>
+                  <Select
+                    value={oportunidade.tipo}
+                    onValueChange={(value: any) =>
+                      setOportunidade({ ...oportunidade, tipo: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo de oportunidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="estagio">Estágio</SelectItem>
+                      <SelectItem value="trainee">Trainee</SelectItem>
+                      <SelectItem value="junior">Júnior</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="descricao-oportunidade">
+                    Descrição da Oportunidade
+                  </Label>
+                  <Textarea
+                    id="descricao-oportunidade"
+                    placeholder="Descreva a oportunidade..."
+                    rows={3}
+                    value={oportunidade.descricao}
+                    onChange={(e) =>
+                      setOportunidade({
+                        ...oportunidade,
+                        descricao: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          <DialogFooter>
+          <div className="flex justify-between mt-4 pt-2 border-t">
             <Button
               variant="outline"
               onClick={() => setIsFeedbackDialogOpen(false)}
@@ -520,7 +785,7 @@ const ManagerProjects = () => {
             >
               {isSubmittingFeedback ? "Enviando..." : "Enviar Feedback"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </UserPanelLayout>

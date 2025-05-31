@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
-  timeout: 5000, // Timeout de 5 segundos
+  baseURL: "http://localhost:3000",
+  timeout: 10000, // Timeout aumentado para 10 segundos
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -12,6 +12,9 @@ const instance = axios.create({
 // Debug log para todas as requisições
 instance.interceptors.request.use(
   (config) => {
+    // Guarda a URL original para logging
+    const originalUrl = config.url;
+
     console.log(
       `API Request: ${config.method?.toUpperCase()} ${config.url}`,
       config.data
@@ -22,13 +25,13 @@ instance.interceptors.request.use(
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // Verifica se a URL já começa com /api
+    // Verifica se a URL já começa com /api para evitar duplicação
     if (config.url?.startsWith("/api/")) {
       console.log(`URL já começa com /api: ${config.url}`);
       return config;
     }
 
-    // Verifica se precisamos adicionar o prefixo /api
+    // Adiciona prefixo /api para todas as rotas da API
     if (
       config.url?.startsWith("/jovem/") ||
       config.url?.startsWith("/rh/") ||
@@ -37,15 +40,19 @@ instance.interceptors.request.use(
       config.url?.startsWith("jovem/") ||
       config.url?.startsWith("rh/") ||
       config.url?.startsWith("gestor/") ||
-      config.url?.startsWith("auth/")
+      config.url?.startsWith("auth/") ||
+      config.url?.startsWith("/entrevistas") ||
+      config.url?.startsWith("entrevistas") ||
+      config.url?.startsWith("/talentos") ||
+      config.url?.startsWith("talentos")
     ) {
       // Remove a barra inicial se existir e adiciona /api/
       const urlPath = config.url.startsWith("/")
         ? config.url.substring(1)
         : config.url;
-      const originalUrl = config.url;
+
       config.url = `/api/${urlPath}`;
-      console.log(`Corrigindo URL: ${originalUrl} -> ${config.url}`);
+      console.log(`URL normalizada: ${originalUrl} -> ${config.url}`);
     }
 
     return config;
