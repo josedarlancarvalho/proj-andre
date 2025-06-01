@@ -1,6 +1,9 @@
 # Estágio de build
 FROM node:20-alpine as builder
 
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 WORKDIR /app
 
 # Copiar apenas package.json para instalar dependências
@@ -16,7 +19,7 @@ RUN npm install
 COPY . .
 
 # Build da aplicação
-RUN npm run build
+RUN VITE_API_BASE_URL=$VITE_API_BASE_URL npm run build
 
 # Estágio de produção
 FROM nginx:alpine
