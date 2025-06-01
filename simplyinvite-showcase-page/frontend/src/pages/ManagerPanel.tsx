@@ -14,7 +14,11 @@ import gestorService, {
   buscarTalentosDestaque,
   buscarNovosTalentos,
 } from "@/servicos/gestor";
-import { buscarEntrevistas } from "@/servicos/entrevistas";
+import {
+  buscarEntrevistas,
+  cancelarEntrevista,
+  excluirEntrevistaLocal,
+} from "@/servicos/entrevistas";
 import { adicionarFavorito, listarFavoritos } from "@/servicos/favoritos";
 import { toast } from "sonner";
 
@@ -81,7 +85,12 @@ const ManagerPanel = () => {
 
   // Função para formatar entrevistas para exibição
   const formatarEntrevistas = (entrevistasResponse) => {
-    return entrevistasResponse.map((entrevista) => ({
+    // Filtrar apenas entrevistas com status 'agendada'
+    const entrevistasAgendadas = entrevistasResponse.filter(
+      (entrevista) => entrevista.status === "agendada"
+    );
+
+    return entrevistasAgendadas.map((entrevista) => ({
       id: entrevista.id,
       candidate: entrevista.talentoNome || entrevista.candidato || "Candidato",
       date:
@@ -527,12 +536,76 @@ const ManagerPanel = () => {
                         : "Entrevista Presencial"}
                     </Badge>
                   </div>
-                  <Link to="/gestor/entrevistas">
-                    <Button variant="outline" size="sm">
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Ver detalhes
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Primeiro, tentar excluir a entrevista
+                        cancelarEntrevista(interview.id)
+                          .then(() => {
+                            // Após cancelar, atualizar a lista de entrevistas
+                            // Remover imediatamente da interface para feedback visual
+                            setUpcomingInterviews((prevInterviews) =>
+                              prevInterviews.filter(
+                                (i) => i.id !== interview.id
+                              )
+                            );
+
+                            // E também atualizar todos os dados
+                            fetchManagerData();
+
+                            // Mostrar mensagem de sucesso
+                            toast.success("Entrevista excluída com sucesso!");
+                          })
+                          .catch((error) => {
+                            console.error(
+                              "Erro ao cancelar entrevista via API:",
+                              error
+                            );
+
+                            // Tentar excluir localmente como fallback
+                            const sucesso = excluirEntrevistaLocal(
+                              interview.id
+                            );
+
+                            if (sucesso) {
+                              // Se conseguiu excluir localmente, atualizar a lista
+                              // Remover imediatamente da interface para feedback visual
+                              setUpcomingInterviews((prevInterviews) =>
+                                prevInterviews.filter(
+                                  (i) => i.id !== interview.id
+                                )
+                              );
+
+                              // E também atualizar todos os dados
+                              fetchManagerData();
+
+                              // Mostrar mensagem de sucesso
+                              toast.success("Entrevista excluída com sucesso!");
+                            } else {
+                              // Se falhou, mostrar erro
+                              toast.error("Erro ao excluir entrevista");
+                            }
+                          });
+                      }}
+                    >
+                      Excluir
                     </Button>
-                  </Link>
+                    <Link
+                      to={`/gestor/entrevistas?id=${interview.id}&edit=true`}
+                    >
+                      <Button variant="outline" size="sm">
+                        Editar
+                      </Button>
+                    </Link>
+                    <Link to="/gestor/entrevistas">
+                      <Button variant="outline" size="sm">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Ver detalhes
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ))
             ) : (

@@ -1,5 +1,6 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const emailService = require("../utils/emailService");
 
 // Buscar projetos destacados
 exports.buscarProjetosDestacados = async (req, res) => {
@@ -51,6 +52,29 @@ exports.enviarFeedback = async (req, res) => {
     const { projetoId } = req.params;
     const { comentario, oportunidade } = req.body;
     const gestorId = req.usuario.id;
+
+    // Buscar informações do projeto e do jovem
+    const projeto = await db.Projeto.findOne({
+      where: { id: parseInt(projetoId, 10) },
+      include: [
+        {
+          model: db.Usuario,
+          as: "usuario",
+          attributes: ["id", "nomeCompleto", "email"],
+        },
+      ],
+    });
+
+    if (!projeto) {
+      return res.status(404).json({ message: "Projeto não encontrado" });
+    }
+
+    // Buscar informações do gestor
+    const gestor = await db.Usuario.findByPk(gestorId, {
+      attributes: ["id", "nomeCompleto", "email", "empresa", "cargo"],
+    });
+
+    // Criar o feedback
     const feedback = await db.Feedback.create({
       projetoId: parseInt(projetoId, 10),
       gestorId,
@@ -58,8 +82,56 @@ exports.enviarFeedback = async (req, res) => {
       oportunidade,
     });
 
-    res.json(feedback);
+    // Criar uma nova notificação para o jovem
+    await db.Notificacao.create({
+      usuarioId: projeto.usuario.id,
+      tipo: "feedback",
+      conteudo: `Você recebeu um novo feedback para seu projeto "${projeto.titulo}" de ${gestor.nomeCompleto}.`,
+      dados: {
+        projetoId: projeto.id,
+        feedbackId: feedback.id,
+        gestorId: gestor.id,
+        gestorNome: gestor.nomeCompleto,
+      },
+    });
+
+    // Enviar e-mail de notificação
+    try {
+      // Construir o link para o projeto
+      const appUrl = process.env.APP_URL || "http://localhost:5173";
+      const linkProjeto = `${appUrl}/jovem/submissoes`;
+
+      const emailResult = await emailService.sendFeedbackEmail(
+        projeto.usuario.email,
+        {
+          nomeJovem: projeto.usuario.nomeCompleto,
+          tituloProjeto: projeto.titulo,
+          nomeGestor: gestor.nomeCompleto,
+          comentario: comentario,
+          oportunidade: oportunidade,
+          linkProjeto: linkProjeto,
+          projetoId: projeto.id,
+          jovemId: projeto.usuario.id,
+        }
+      );
+
+      if (emailResult.success) {
+        console.log(`E-mail de feedback enviado para ${projeto.usuario.email}`);
+      } else {
+        console.error("Erro ao enviar e-mail de feedback:", emailResult.error);
+      }
+    } catch (emailError) {
+      console.error("Exceção ao enviar e-mail de feedback:", emailError);
+      // Não interromper o fluxo se o e-mail falhar
+    }
+
+    res.json({
+      ...feedback.toJSON(),
+      emailEnviado: true,
+      notificacaoCriada: true,
+    });
   } catch (error) {
+    console.error("Erro ao enviar feedback:", error);
     res.status(500).json({ message: "Erro ao enviar feedback" });
   }
 };
@@ -206,12 +278,10 @@ exports.removerFavorito = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao remover talento dos favoritos:", error);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Erro ao remover talento dos favoritos",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao remover talento dos favoritos",
+    });
   }
 };
 

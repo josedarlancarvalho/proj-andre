@@ -7,13 +7,15 @@ import ProjectCard from "@/components/panels/ProjectCard";
 import VideoPlayer from "@/components/panels/VideoPlayer";
 import FeedbackList from "@/components/panels/FeedbackList";
 import StatCard from "@/components/panels/StatCard";
-import { Plus, FileVideo, Medal, Eye } from "lucide-react";
+import { Plus, FileVideo, Medal, Eye, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext"; // Importar o contexto de autenticação
 import { getMeuPerfil } from "@/servicos/usuario"; // Importar o serviço para obter dados do perfil
 import { buscarMeusProjetos, buscarFeedbacks } from "@/servicos/jovem"; // Importar serviços do jovem
+import { buscarEntrevistasJovem } from "@/servicos/entrevistas"; // Importar serviço de entrevistas
 import VideoRecorder from "@/components/VideoRecorder";
 import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Interfaces
 interface Project {
@@ -58,11 +60,25 @@ interface VideoDetails {
   videoUrl: string;
 }
 
+interface Entrevista {
+  id: string;
+  gestorNome: string;
+  data: string;
+  hora: string;
+  tipo: "online" | "presencial";
+  link?: string;
+  local?: string;
+  observacoes?: string;
+  status: "agendada" | "cancelada" | "realizada";
+  empresa?: string;
+}
+
 const TalentPanel = () => {
   const { user } = useAuth(); // Usar o hook de autenticação para obter o usuário logado
   const [projects, setProjects] = useState<Project[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [entrevistas, setEntrevistas] = useState<Entrevista[]>([]);
   const [profileStats, setProfileStats] = useState<ProfileStats>({
     projectsSent: 0,
     feedbacksReceived: 0,
@@ -165,6 +181,19 @@ const TalentPanel = () => {
         } catch (feedbacksError) {
           console.error("Erro ao carregar feedbacks:", feedbacksError);
         }
+
+        // Obter entrevistas do jovem
+        try {
+          const entrevistasData = await buscarEntrevistasJovem(user?.id);
+          console.log("Entrevistas carregadas:", entrevistasData);
+          // Filtrar apenas entrevistas agendadas (não canceladas)
+          const entrevistasAgendadas = entrevistasData.filter(
+            (entrevista) => entrevista.status === "agendada"
+          );
+          setEntrevistas(entrevistasAgendadas);
+        } catch (entrevistasError) {
+          console.error("Erro ao carregar entrevistas:", entrevistasError);
+        }
       } catch (error) {
         console.error("Erro geral ao carregar dados do usuário:", error);
       }
@@ -173,6 +202,81 @@ const TalentPanel = () => {
     if (user) {
       fetchData();
     }
+  }, [user]);
+
+  // Adicionar listeners para eventos de entrevista
+  useEffect(() => {
+    // Função para atualizar entrevistas quando uma nova for agendada
+    const handleEntrevistaAgendada = (event) => {
+      console.log("Evento de entrevista agendada recebido:", event.detail);
+      // Buscar entrevistas novamente
+      if (user) {
+        buscarEntrevistasJovem(user.id)
+          .then((entrevistasData) => {
+            // Filtrar apenas entrevistas agendadas (não canceladas)
+            const entrevistasAgendadas = entrevistasData.filter(
+              (entrevista) => entrevista.status === "agendada"
+            );
+            setEntrevistas(entrevistasAgendadas);
+            toast.success("Nova entrevista agendada!");
+          })
+          .catch((error) => {
+            console.error("Erro ao atualizar entrevistas:", error);
+          });
+      }
+    };
+
+    // Função para atualizar entrevistas quando uma for atualizada
+    const handleEntrevistaAtualizada = (event) => {
+      console.log("Evento de entrevista atualizada recebido:", event.detail);
+      // Buscar entrevistas novamente
+      if (user) {
+        buscarEntrevistasJovem(user.id)
+          .then((entrevistasData) => {
+            // Filtrar apenas entrevistas agendadas (não canceladas)
+            const entrevistasAgendadas = entrevistasData.filter(
+              (entrevista) => entrevista.status === "agendada"
+            );
+            setEntrevistas(entrevistasAgendadas);
+            toast.success("Detalhes da entrevista foram atualizados!");
+          })
+          .catch((error) => {
+            console.error("Erro ao atualizar entrevistas:", error);
+          });
+      }
+    };
+
+    // Função para atualizar entrevistas quando uma for cancelada
+    const handleEntrevistaCancelada = (event) => {
+      console.log("Evento de entrevista cancelada recebido:", event.detail);
+      // Remover a entrevista cancelada da lista
+      const entrevistaId = event.detail.entrevistaId;
+      setEntrevistas((prevEntrevistas) =>
+        prevEntrevistas.filter((entrevista) => entrevista.id !== entrevistaId)
+      );
+      toast.info("Uma entrevista foi cancelada");
+    };
+
+    // Registrar os listeners
+    window.addEventListener("entrevistaAgendada", handleEntrevistaAgendada);
+    window.addEventListener("entrevistaAtualizada", handleEntrevistaAtualizada);
+    window.addEventListener("entrevistaCancelada", handleEntrevistaCancelada);
+
+    // Cleanup ao desmontar o componente
+    return () => {
+      window.removeEventListener(
+        "entrevistaAgendada",
+        handleEntrevistaAgendada
+      );
+      window.removeEventListener(
+        "entrevistaAtualizada",
+        handleEntrevistaAtualizada
+      );
+      window.removeEventListener(
+        "entrevistaCancelada",
+        handleEntrevistaCancelada
+      );
+    };
   }, [user]);
 
   const handleRecordVideo = () => {
@@ -217,6 +321,16 @@ const TalentPanel = () => {
     }
   };
 
+  // Função para formatar data
+  const formatarData = (dataString: string) => {
+    try {
+      const data = new Date(dataString);
+      return data.toLocaleDateString("pt-BR");
+    } catch (error) {
+      return dataString;
+    }
+  };
+
   return (
     <UserPanelLayout userType="jovem">
       <div className="space-y-6">
@@ -254,6 +368,12 @@ const TalentPanel = () => {
             value={String(profileStats.projectsSent)}
             description="Continue compartilhando seu talento!"
             icon={<FileVideo className="h-4 w-4" />}
+          />
+          <StatCard
+            title="Entrevistas"
+            value={String(entrevistas.length)}
+            description="Entrevistas agendadas"
+            icon={<Calendar className="h-4 w-4" />}
           />
           <StatCard
             title="Visualizações"
@@ -295,49 +415,91 @@ const TalentPanel = () => {
           </div>
         </div>
 
-        {/* Feedbacks e Vídeo */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Feedbacks Recebidos</h2>
-            </div>
-            {feedbacks.length > 0 ? (
-              <FeedbackList feedbacks={feedbacks.slice(0, 1)} />
-            ) : (
-              <p>Nenhum feedback recebido ainda.</p>
-            )}
-          </div>
+        {/* Entrevistas */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Entrevistas Agendadas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {entrevistas.length > 0 ? (
+              entrevistas.map((entrevista) => (
+                <div
+                  key={entrevista.id}
+                  className="mb-4 p-3 border rounded-lg flex flex-col"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        Entrevista com {entrevista.gestorNome}
+                      </h3>
+                      {entrevista.empresa && (
+                        <p className="text-sm text-muted-foreground">
+                          Empresa: {entrevista.empresa}
+                        </p>
+                      )}
+                    </div>
+                    <Badge className="bg-blue-500 text-white">
+                      {formatarData(entrevista.data)}
+                    </Badge>
+                  </div>
 
-          {/* Seção removida do Vídeo */}
-          {/*
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Seu Vídeo</h2>
-              {!isRecording && (
-                <Button variant="outline" size="sm" onClick={handleRecordVideo}>
-                  {isUploading ? "Salvando..." : "Gravar vídeo"}
-                </Button>
-              )}
-            </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <Badge variant="outline" className="font-medium">
+                      Horário: {entrevista.hora}
+                    </Badge>
+                    <Badge variant="outline">
+                      {entrevista.tipo === "online"
+                        ? "Entrevista Online"
+                        : "Entrevista Presencial"}
+                    </Badge>
+                    {entrevista.tipo === "presencial" && entrevista.local && (
+                      <Badge variant="outline">Local: {entrevista.local}</Badge>
+                    )}
+                  </div>
 
-            {isRecording ? (
-              <VideoRecorder
-                onSave={handleSaveVideo}
-                onCancel={handleCancelRecording}
-              />
-            ) : videoDetails.videoUrl ? (
-              <VideoPlayer
-                title={videoDetails.title}
-                videoUrl={videoDetails.videoUrl}
-                onRecord={handleRecordVideo}
-              />
+                  {entrevista.observacoes && (
+                    <div className="mt-2 p-3 bg-muted rounded-md">
+                      <h4 className="font-medium mb-1">Observações:</h4>
+                      <p className="text-sm italic">
+                        "{entrevista.observacoes}"
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex justify-end">
+                    {entrevista.tipo === "online" && entrevista.link && (
+                      <Button variant="default" size="sm" asChild>
+                        <a
+                          href={entrevista.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          Participar da Reunião
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
             ) : (
-              <div className="flex h-60 items-center justify-center rounded-md border border-dashed border-gray-300 text-gray-400">
-                Nenhum vídeo enviado ainda.
-              </div>
+              <p className="text-muted-foreground">
+                Nenhuma entrevista agendada no momento.
+              </p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Feedbacks */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Feedbacks Recebidos</h2>
           </div>
-          */}
+          {feedbacks.length > 0 ? (
+            <FeedbackList feedbacks={feedbacks} />
+          ) : (
+            <p>Nenhum feedback recebido ainda.</p>
+          )}
         </div>
 
         {/* Convites */}

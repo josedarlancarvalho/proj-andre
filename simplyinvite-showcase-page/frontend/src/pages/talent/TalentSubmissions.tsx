@@ -24,6 +24,12 @@ import { Textarea } from "@/components/ui/textarea";
 import FeedbackModal from "@/components/panels/FeedbackModal";
 import { buscarFeedbackProjeto } from "@/servicos/gestor";
 import { FeedbackGestor, Feedback } from "@/servicos/jovem";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -227,12 +233,24 @@ const TalentSubmissions = () => {
       console.log(
         `Chamando API para buscar feedback do projeto ID: ${projectId}`
       );
-      const feedbacksData = await jovemService.buscarFeedbackProjeto(
-        parseInt(projectId)
-      );
 
-      console.log(`Feedback recebido:`, feedbacksData);
-      setFeedbackData(feedbacksData);
+      // Buscar em paralelo feedbacks do gestor e do RH
+      const [feedbacksData, feedbacksGestor, avaliacoesRH] = await Promise.all([
+        jovemService.buscarFeedbackProjeto(parseInt(projectId)),
+        jovemService
+          .buscarFeedbackGestor(parseInt(projectId))
+          .catch(() => null),
+        jovemService.buscarAvaliacoesRH(parseInt(projectId)).catch(() => []),
+      ]);
+
+      // Combinar todos os feedbacks
+      const todosFeedbacks = {
+        avaliacoes: avaliacoesRH || [],
+        feedbacks: feedbacksGestor ? [feedbacksGestor] : [],
+      };
+
+      console.log(`Feedbacks combinados recebidos:`, todosFeedbacks);
+      setFeedbackData(todosFeedbacks);
     } catch (error: any) {
       console.error("Erro ao carregar feedbacks:", error);
 
@@ -675,17 +693,149 @@ const TalentSubmissions = () => {
       </Dialog>
 
       {/* Modal de Feedbacks */}
-      {selectedProjectForFeedback && (
-        <FeedbackModal
-          open={isFeedbackModalOpen}
-          onOpenChange={setIsFeedbackModalOpen}
-          projetoId={selectedProjectForFeedback.id}
-          projetoTitulo={selectedProjectForFeedback.title}
-          avaliacoes={feedbackData.avaliacoes}
-          feedbacks={feedbackData.feedbacks}
-          isLoading={loadingFeedback}
-        />
-      )}
+      <Dialog open={isFeedbackModalOpen} onOpenChange={setIsFeedbackModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Feedbacks para {selectedProjectForFeedback?.title || "Projeto"}
+            </DialogTitle>
+            <DialogDescription>
+              Todos os feedbacks e avaliações recebidos para este projeto
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingFeedback ? (
+            <div className="flex items-center justify-center p-6">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+              <span className="ml-3">Carregando feedbacks...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Feedbacks de RH */}
+              {feedbackData.avaliacoes && feedbackData.avaliacoes.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Avaliações do RH
+                  </h3>
+                  <Accordion type="single" collapsible className="w-full">
+                    {feedbackData.avaliacoes.map((avaliacao, index) => (
+                      <AccordionItem
+                        key={avaliacao.id || index}
+                        value={`rh-${avaliacao.id || index}`}
+                      >
+                        <AccordionTrigger className="hover:bg-muted/50 px-4 rounded-md">
+                          <div className="flex justify-between items-center w-full pr-4">
+                            <span>
+                              {avaliacao.avaliador?.nome || "Avaliador RH"}
+                            </span>
+                            <Badge className="ml-2">
+                              {avaliacao.medalha
+                                ? `Medalha ${
+                                    avaliacao.medalha.charAt(0).toUpperCase() +
+                                    avaliacao.medalha.slice(1)
+                                  }`
+                                : `Nota ${avaliacao.nota || "N/A"}`}
+                            </Badge>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4">
+                          <div className="p-2 bg-muted/30 rounded-md">
+                            <p>{avaliacao.comentario}</p>
+                            <div className="text-xs text-muted-foreground mt-2">
+                              {avaliacao.createdAt && (
+                                <time dateTime={avaliacao.createdAt}>
+                                  {new Date(
+                                    avaliacao.createdAt
+                                  ).toLocaleDateString()}
+                                </time>
+                              )}
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              ) : (
+                <div className="p-4 border rounded-md text-center">
+                  <p className="text-muted-foreground">
+                    Sem avaliações do RH para este projeto
+                  </p>
+                </div>
+              )}
+
+              {/* Feedbacks de Gestores */}
+              {feedbackData.feedbacks && feedbackData.feedbacks.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Feedbacks de Gestores
+                  </h3>
+                  <Accordion type="single" collapsible className="w-full">
+                    {feedbackData.feedbacks.map((feedback, index) => (
+                      <AccordionItem
+                        key={feedback.id || index}
+                        value={`gestor-${feedback.id || index}`}
+                      >
+                        <AccordionTrigger className="hover:bg-muted/50 px-4 rounded-md">
+                          <div className="flex justify-between items-center w-full pr-4">
+                            <span>{feedback.avaliador?.nome || "Gestor"}</span>
+                            {feedback.oportunidade && (
+                              <Badge
+                                variant="outline"
+                                className="ml-2 bg-green-100 text-green-800"
+                              >
+                                Oportunidade
+                              </Badge>
+                            )}
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4">
+                          <div className="p-2 bg-muted/30 rounded-md">
+                            <p>{feedback.comentario}</p>
+
+                            {feedback.oportunidade && (
+                              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                                <h4 className="font-medium text-sm">
+                                  Oportunidade: {feedback.oportunidade.tipo}
+                                </h4>
+                                <p className="text-sm mt-1">
+                                  {feedback.oportunidade.descricao}
+                                </p>
+                              </div>
+                            )}
+
+                            <div className="text-xs text-muted-foreground mt-2">
+                              {feedback.createdAt && (
+                                <time dateTime={feedback.createdAt}>
+                                  {new Date(
+                                    feedback.createdAt
+                                  ).toLocaleDateString()}
+                                </time>
+                              )}
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </div>
+              ) : (
+                <div className="p-4 border rounded-md text-center">
+                  <p className="text-muted-foreground">
+                    Sem feedbacks de gestores para este projeto
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setIsFeedbackModalOpen(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Adicionar modal de feedback */}
       {feedbackModal && projetoFeedback && (

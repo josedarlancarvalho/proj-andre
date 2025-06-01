@@ -1,11 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path");
 const sequelize = require("./config/database");
 const jovemRoutes = require("./routes/jovemRoutes");
 const rhRoutes = require("./routes/rhRoutes");
 const gestorRoutes = require("./routes/gestorRoutes");
 const authRoutes = require("./routes/authRoutes");
+const respostasRoutes = require("./routes/respostasRoutes");
 const models = require("./models");
 const bodyParser = require("body-parser");
 
@@ -15,6 +17,10 @@ dotenv.config();
 // Configurar Express
 const app = express();
 const port = process.env.PORT || 3001;
+
+// Configurar o mecanismo de visualização EJS
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 // Middlewares
 app.use(cors());
@@ -56,12 +62,14 @@ app.use("/api/jovem", jovemRoutes);
 app.use("/api/rh", rhRoutes);
 app.use("/api/gestor", gestorRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/respostas", respostasRoutes);
 
 // Rotas sem o prefixo /api para lidar com requisições do frontend
 app.use("/jovem", jovemRoutes);
 app.use("/rh", rhRoutes);
 app.use("/gestor", gestorRoutes);
 app.use("/auth", authRoutes);
+app.use("/respostas", respostasRoutes);
 
 // Rota simples para teste
 app.get("/", (req, res) => {

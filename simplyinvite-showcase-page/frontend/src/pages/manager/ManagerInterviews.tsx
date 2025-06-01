@@ -58,6 +58,7 @@ const formSchema = z.object({
   }),
   link: z.string().optional(),
   endereco: z.string().optional(),
+  observacoes: z.string().optional(),
 });
 
 const ManagerInterviews = () => {
@@ -70,6 +71,7 @@ const ManagerInterviews = () => {
   const [isAgendarDialogOpen, setIsAgendarDialogOpen] = useState(false);
   const [entrevistasDoDia, setEntrevistasDoDia] = useState([]);
   const [candidatoId, setCandidatoId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,6 +82,7 @@ const ManagerInterviews = () => {
       tipo: "online",
       link: "",
       endereco: "",
+      observacoes: "",
     },
   });
 
@@ -140,6 +143,8 @@ const ManagerInterviews = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
+      setIsSubmitting(true);
+
       // Verificar se temos um ID de candidato
       if (!values.candidatoId && !candidatoId) {
         toast.error(
@@ -154,12 +159,15 @@ const ManagerInterviews = () => {
       const entrevistaDados = {
         talentoId: talentoId!,
         talentoNome: values.candidato,
+        gestorId: user?.id?.toString() || "1",
+        gestorNome: user?.nomeCompleto || "Gestor",
+        empresa: user?.empresa || "Empresa",
         data: format(values.data, "yyyy-MM-dd"),
         hora: values.hora,
         tipo: values.tipo,
         local: values.tipo === "presencial" ? values.endereco : undefined,
         link: values.tipo === "online" ? values.link : undefined,
-        observacoes: "",
+        observacoes: values.observacoes,
       };
 
       console.log("Agendando entrevista com dados:", entrevistaDados);
@@ -182,6 +190,8 @@ const ManagerInterviews = () => {
       setCandidatoId(null);
     } catch (error) {
       console.error("Erro ao agendar entrevista:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -200,6 +210,7 @@ const ManagerInterviews = () => {
         tipo: "online",
         link: "",
         endereco: "",
+        observacoes: "",
       });
       setCandidatoId(null);
     }
@@ -522,15 +533,34 @@ const ManagerInterviews = () => {
                   )}
                 />
               )}
+              <FormField
+                control={form.control}
+                name="observacoes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações (opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Informações adicionais para o candidato"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <DialogFooter className="pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => handleDialogOpenChange(false)}
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">Agendar Entrevista</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Agendando..." : "Agendar Entrevista"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
