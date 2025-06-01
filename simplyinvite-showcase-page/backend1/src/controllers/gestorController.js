@@ -71,7 +71,7 @@ exports.enviarFeedback = async (req, res) => {
 
     // Buscar informações do gestor
     const gestor = await db.Usuario.findByPk(gestorId, {
-      attributes: ["id", "nomeCompleto", "email", "empresa", "cargo"],
+      attributes: ["id", "nomeCompleto", "email"],
     });
 
     // Criar o feedback

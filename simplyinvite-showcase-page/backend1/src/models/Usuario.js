@@ -27,6 +27,15 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      // Dados para gestores
+      empresa: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      cargo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       // Campos do perfil
       cidade: {
         type: DataTypes.STRING,

@@ -5,6 +5,8 @@ const AvaliacaoModel = require("./Avaliacao");
 const FeedbackModel = require("./Feedback");
 const EmpresaModel = require("./Empresa");
 const ConviteModel = require("./Convite");
+const NotificacaoModel = require("./Notificacao");
+const { DataTypes } = require("sequelize");
 
 const models = {
   Usuario: UsuarioModel(sequelize),
@@ -13,6 +15,7 @@ const models = {
   Feedback: FeedbackModel(sequelize),
   Empresa: EmpresaModel(sequelize),
   Convite: ConviteModel(sequelize),
+  Notificacao: NotificacaoModel(sequelize, DataTypes),
 };
 
 // Definir relações entre modelos
@@ -55,5 +58,10 @@ models.Feedback.belongsTo(models.Usuario, {
   foreignKey: "gestorId",
   as: "gestor",
 });
+
+// Adicionar associações para Notificacao se existirem
+if (models.Notificacao.associate) {
+  models.Notificacao.associate(models);
+}
 
 module.exports = models;
