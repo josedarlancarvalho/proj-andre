@@ -426,3 +426,40 @@ exports.buscarProjetosFiltrados = async (req, res) => {
     res.status(500).json({ message: "Erro ao buscar projetos filtrados" });
   }
 };
+
+// Excluir projeto
+exports.excluirProjeto = async (req, res) => {
+  try {
+    const { projetoId } = req.params;
+
+    const projeto = await db.Projeto.findByPk(parseInt(projetoId, 10));
+    if (!projeto) {
+      return res.status(404).json({ message: "Projeto não encontrado" });
+    }
+
+    // Excluir avaliações relacionadas ao projeto
+    await db.Avaliacao.destroy({
+      where: { projetoId: parseInt(projetoId, 10) },
+    });
+
+    // Excluir feedbacks relacionados ao projeto
+    await db.Feedback.destroy({
+      where: { projetoId: parseInt(projetoId, 10) },
+    });
+
+    // Excluir o projeto
+    await projeto.destroy();
+
+    res.status(200).json({
+      success: true,
+      message: "Projeto excluído com sucesso",
+    });
+  } catch (error) {
+    console.error("Erro ao excluir projeto:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erro ao excluir projeto",
+      error: error.message,
+    });
+  }
+};
