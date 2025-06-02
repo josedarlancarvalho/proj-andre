@@ -11,8 +11,14 @@ COPY package*.json ./
 # Instalar dependências
 RUN npm install
 
+# Instalar explicitamente as novas dependências
+RUN npm install nodemailer ejs
+
 # Copiar o restante do código-fonte
 COPY . .
+
+# Criar diretório de views se não existir
+RUN mkdir -p src/views
 
 # Expor a porta da aplicação
 EXPOSE 8080

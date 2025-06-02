@@ -37,41 +37,61 @@ const FeedbackList = ({ feedbacks }: FeedbackListProps) => {
         ) : (
           <div className="space-y-4">
             {feedbacks.map((feedback) => (
-              <div key={feedback.id} className="border rounded-lg p-4 relative">
+              <div
+                key={feedback.id}
+                className="border rounded-lg p-4 relative hover:shadow-md transition-shadow"
+              >
                 {feedback.isNew && (
                   <Badge className="absolute top-2 right-2 bg-si-accent">
                     Novo
                   </Badge>
                 )}
                 <div className="flex justify-between items-center mb-2">
-                  <div className="font-medium">{feedback.from}</div>
+                  <div className="font-medium text-lg">{feedback.from}</div>
                   <div className="text-xs text-muted-foreground">
                     {feedback.date}
                   </div>
                 </div>
-                <Badge variant="outline" className="mb-2">
-                  {feedback.category}
-                </Badge>
-                <p className="text-sm">{feedback.text}</p>
-                {feedback.nota && (
-                  <p className="text-sm mt-1">Nota: {feedback.nota}</p>
-                )}
-                {feedback.medalha && (
-                  <Badge variant="outline" className="mt-1 mr-1">
-                    Medalha:{" "}
-                    {feedback.medalha.charAt(0).toUpperCase() +
-                      feedback.medalha.slice(1)}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <Badge variant="outline" className="bg-muted">
+                    {feedback.category}
                   </Badge>
-                )}
+                  {feedback.medalha && (
+                    <Badge
+                      className={`
+                        ${
+                          feedback.medalha === "ouro"
+                            ? "bg-yellow-400 text-black"
+                            : feedback.medalha === "prata"
+                            ? "bg-gray-300 text-black"
+                            : "bg-amber-700 text-white"
+                        }
+                      `}
+                    >
+                      Medalha{" "}
+                      {feedback.medalha.charAt(0).toUpperCase() +
+                        feedback.medalha.slice(1)}
+                    </Badge>
+                  )}
+                  {feedback.nota && (
+                    <Badge variant="outline" className="font-medium">
+                      Nota: {feedback.nota}/10
+                    </Badge>
+                  )}
+                </div>
+                <div className="mt-2 p-3 bg-muted/30 rounded-md text-sm">
+                  {feedback.text}
+                </div>
                 {feedback.oportunidade && (
-                  <div className="mt-2 text-sm">
-                    <p className="font-semibold">Oportunidade:</p>
-                    <p>
-                      Tipo:{" "}
-                      {feedback.oportunidade.tipo.charAt(0).toUpperCase() +
-                        feedback.oportunidade.tipo.slice(1)}
-                    </p>
-                    <p>Descrição: {feedback.oportunidade.descricao}</p>
+                  <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-green-600">Oportunidade</Badge>
+                      <span className="font-medium">
+                        {feedback.oportunidade.tipo.charAt(0).toUpperCase() +
+                          feedback.oportunidade.tipo.slice(1)}
+                      </span>
+                    </div>
+                    <p className="text-sm">{feedback.oportunidade.descricao}</p>
                   </div>
                 )}
               </div>

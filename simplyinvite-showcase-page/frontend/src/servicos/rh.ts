@@ -79,6 +79,17 @@ const rhService = {
     }
   },
 
+  // Excluir projeto
+  excluirProjeto: async (projetoId: number): Promise<any> => {
+    try {
+      const response = await api.delete(`/rh/projetos/${projetoId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Erro ao excluir projeto:", error);
+      throw error;
+    }
+  },
+
   // Novo método para salvar feedback do usuário
   salvarFeedbackUsuario: async (
     projetoId: number,

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Video, Eye, MessageSquare, Check } from "lucide-react";
+import { Video, Eye, MessageSquare, Check, Trash2 } from "lucide-react";
 
 interface ProjectCardProps {
   title: string;
@@ -20,6 +20,7 @@ interface ProjectCardProps {
   userType: "talent" | "hr" | "manager";
   isEvaluated?: boolean;
   onEvaluate?: () => void;
+  onDelete?: () => void;
 }
 
 const ProjectCard = ({
@@ -31,7 +32,8 @@ const ProjectCard = ({
   onViewFeedback,
   userType,
   isEvaluated = false,
-  onEvaluate
+  onEvaluate,
+  onDelete
 }: ProjectCardProps) => {
   
   const getMedalColor = () => {
@@ -67,6 +69,21 @@ const ProjectCard = ({
             <Badge className="bg-green-500 text-white">
               Feedback disponível
             </Badge>
+          </div>
+        )}
+        {userType === "hr" && onDelete && (
+          <div className="absolute top-2 right-2">
+            <Button
+              variant="destructive"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>

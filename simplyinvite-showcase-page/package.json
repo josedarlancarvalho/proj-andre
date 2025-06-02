@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "lucide-react": "^0.511.0",
     "simplyinvite-showcase-page": "file:"
   }
 }

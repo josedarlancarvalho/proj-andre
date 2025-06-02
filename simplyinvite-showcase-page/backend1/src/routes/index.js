@@ -29,6 +29,16 @@ router.get(
   authenticate,
   entrevistasController.listarEntrevistas
 );
+router.put(
+  "/entrevistas/:entrevistaId/cancelar",
+  authenticate,
+  entrevistasController.cancelarEntrevista
+);
+router.put(
+  "/entrevistas/:entrevistaId",
+  authenticate,
+  entrevistasController.atualizarEntrevista
+);
 
 // Rota para verificar se a API está funcionando
 router.get("/health", (req, res) => {

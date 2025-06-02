@@ -15,6 +15,7 @@ import {
   Award,
   ChevronRight,
   X,
+  Trash2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -93,6 +94,11 @@ const HRPendingProjects = () => {
   // Add state for search query and filters if implementing search/filter logic
   const [searchQuery, setSearchQuery] = useState("");
   // const [activeFilters, setActiveFilters] = useState<string[]>([]);
+
+  // Adicionar um novo estado para o diálogo de confirmação de exclusão
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Set user name from auth context
@@ -258,6 +264,36 @@ const HRPendingProjects = () => {
     }
   };
 
+  // Adicionar handler para excluir projeto
+  const handleDeleteProject = (projectId: string) => {
+    setProjectToDelete(projectId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Adicionar handler para confirmar exclusão
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await rhService.excluirProjeto(parseInt(projectToDelete));
+      toast.success("Projeto excluído com sucesso");
+
+      // Atualizar a lista de projetos
+      setPendingProjectsList((prevList) =>
+        prevList.filter((project) => project.id !== projectToDelete)
+      );
+
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Erro ao excluir projeto:", error);
+      toast.error("Erro ao excluir projeto. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
+      setProjectToDelete(null);
+    }
+  };
+
   return (
     <UserPanelLayout userType="rh">
       <div className="space-y-6">
@@ -315,6 +351,7 @@ const HRPendingProjects = () => {
                     onViewDetails={() => handleViewDetails(project)}
                     onEvaluate={() => handleQuickFeedback(project)}
                     isEvaluated={projectsWithFeedback.includes(project.id)}
+                    onDelete={() => handleDeleteProject(project.id)}
                   />
                 </div>
               ))
@@ -603,6 +640,35 @@ const HRPendingProjects = () => {
           </div>
         </div>
       )}
+
+      {/* Adicionar o diálogo de confirmação de exclusão */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmação de Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este projeto? Esta ação não pode
+              ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Excluindo..." : "Excluir Projeto"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </UserPanelLayout>
   );
 };

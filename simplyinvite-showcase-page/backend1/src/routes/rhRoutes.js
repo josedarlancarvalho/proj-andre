@@ -28,6 +28,7 @@ router.get("/projetos/todos", rhController.buscarTodosProjetos);
 router.get("/projetos/filtrados", rhController.buscarProjetosFiltrados);
 router.get("/projetos/pendentes", rhController.buscarProjetosPendentes);
 router.get("/projetos/:id", rhController.buscarProjeto);
+router.delete("/projetos/:projetoId", rhController.excluirProjeto);
 
 // Rotas para avaliações
 router.get("/avaliacoes/historico", rhController.buscarHistoricoAvaliacoes);
