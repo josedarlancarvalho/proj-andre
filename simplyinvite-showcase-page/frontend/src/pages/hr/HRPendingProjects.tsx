@@ -41,6 +41,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import ProjectCard from "@/components/panels/ProjectCard";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Interface for pending projects on this specific page
 interface HRPendingProjectDetail {
@@ -366,74 +368,71 @@ const HRPendingProjects = () => {
 
       {/* Diálogo para visualizar detalhes do projeto */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>{selectedProject?.title}</DialogTitle>
-            <DialogDescription>Detalhes do projeto</DialogDescription>
+            <DialogDescription>
+              por {selectedProject?.author} - {selectedProject?.date}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Descrição</h4>
-              <p className="text-sm text-muted-foreground">
-                {selectedProject?.descricao || "Sem descrição disponível"}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="font-medium">Tecnologias</h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedProject?.tecnologias &&
-                selectedProject.tecnologias.length > 0 ? (
-                  selectedProject.tecnologias.map((tech, index) => (
-                    <Badge key={index} variant="secondary">
-                      {tech}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-muted-foreground">
-                    Nenhuma tecnologia especificada
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {selectedProject?.linkRepositorio && (
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <h4 className="font-medium">Link do Repositório</h4>
-                <a
-                  href={selectedProject.linkRepositorio}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline flex items-center"
-                >
-                  {selectedProject.linkRepositorio}
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
+                <h4 className="font-medium">Descrição</h4>
+                <p className="text-sm text-muted-foreground">
+                  {selectedProject?.descricao || "Sem descrição disponível"}
+                </p>
               </div>
-            )}
 
-            {selectedProject?.linkYoutube && (
               <div className="space-y-2">
-                <h4 className="font-medium">Link do YouTube</h4>
-                <a
-                  href={selectedProject.linkYoutube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline flex items-center"
-                >
-                  {selectedProject.linkYoutube}
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
+                <h4 className="font-medium">Tecnologias</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject?.tecnologias &&
+                  selectedProject.tecnologias.length > 0 ? (
+                    selectedProject.tecnologias.map((tech, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tech}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Nenhuma tecnologia especificada
+                    </span>
+                  )}
+                </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <h4 className="font-medium">Data de Submissão</h4>
-              <p className="text-sm text-muted-foreground">
-                {selectedProject?.date}
-              </p>
+              {selectedProject?.linkRepositorio && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Link do Repositório</h4>
+                  <a
+                    href={selectedProject.linkRepositorio}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline flex items-center"
+                  >
+                    {selectedProject.linkRepositorio}
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {selectedProject?.linkYoutube && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Link do YouTube</h4>
+                  <a
+                    href={selectedProject.linkYoutube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline flex items-center"
+                  >
+                    {selectedProject.linkYoutube}
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+              )}
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button
               variant="outline"
@@ -443,10 +442,8 @@ const HRPendingProjects = () => {
             </Button>
             <Button
               onClick={() => {
-                if (selectedProject) {
-                  setIsDetailsDialogOpen(false);
-                  handleQuickFeedback(selectedProject);
-                }
+                setIsDetailsDialogOpen(false);
+                setIsEvaluationDialogOpen(true);
               }}
             >
               Avaliar Projeto
@@ -455,112 +452,146 @@ const HRPendingProjects = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Diálogo para avaliação do projeto */}
+      {/* Diálogo para avaliar projeto */}
       <Dialog
         open={isEvaluationDialogOpen}
         onOpenChange={setIsEvaluationDialogOpen}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Avaliar Projeto</DialogTitle>
             <DialogDescription>
-              {selectedProject?.title} - {selectedProject?.author}
+              Avalie o projeto "{selectedProject?.title}" de{" "}
+              {selectedProject?.author}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="nota">Nota ({avaliacao.nota}/10)</Label>
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${
-                        i < Math.ceil(avaliacao.nota / 2)
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="nota">Nota (1-10)</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="nota"
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={avaliacao.nota}
+                    onChange={(e) =>
+                      handleAvaliacaoChange(
+                        "nota",
+                        Math.min(10, Math.max(1, Number(e.target.value)))
+                      )
+                    }
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">/10</span>
                 </div>
               </div>
-              <Slider
-                id="nota"
-                value={[avaliacao.nota]}
-                min={0}
-                max={10}
-                step={1}
-                onValueChange={(value) =>
-                  handleAvaliacaoChange("nota", value[0])
-                }
-                className="mt-2"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="medalha">Medalha (opcional)</Label>
-              <Select
-                value={avaliacao.medalha}
-                onValueChange={(value) =>
-                  handleAvaliacaoChange(
-                    "medalha",
-                    value as "ouro" | "prata" | "bronze" | undefined
-                  )
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma medalha (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Sem medalha</SelectItem>
-                  <SelectItem value="ouro">
-                    <div className="flex items-center">
-                      <Award className="h-4 w-4 mr-2 text-yellow-500" />
-                      <span>Medalha de Ouro</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="prata">
-                    <div className="flex items-center">
-                      <Award className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>Medalha de Prata</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="bronze">
-                    <div className="flex items-center">
-                      <Award className="h-4 w-4 mr-2 text-amber-700" />
-                      <span>Medalha de Bronze</span>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label>Medalha (opcional)</Label>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    variant={
+                      avaliacao.medalha === "ouro" ? "default" : "outline"
+                    }
+                    className={
+                      avaliacao.medalha === "ouro"
+                        ? "bg-yellow-400 text-yellow-950 hover:bg-yellow-500"
+                        : "border-yellow-400 text-yellow-600 hover:bg-yellow-50"
+                    }
+                    onClick={() =>
+                      handleAvaliacaoChange(
+                        "medalha",
+                        avaliacao.medalha === "ouro" ? null : "ouro"
+                      )
+                    }
+                  >
+                    <Award className="mr-2 h-4 w-4" />
+                    Ouro
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      avaliacao.medalha === "prata" ? "default" : "outline"
+                    }
+                    className={
+                      avaliacao.medalha === "prata"
+                        ? "bg-gray-300 text-gray-950 hover:bg-gray-400"
+                        : "border-gray-300 text-gray-600 hover:bg-gray-50"
+                    }
+                    onClick={() =>
+                      handleAvaliacaoChange(
+                        "medalha",
+                        avaliacao.medalha === "prata" ? null : "prata"
+                      )
+                    }
+                  >
+                    <Award className="mr-2 h-4 w-4" />
+                    Prata
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      avaliacao.medalha === "bronze" ? "default" : "outline"
+                    }
+                    className={
+                      avaliacao.medalha === "bronze"
+                        ? "bg-amber-700 text-white hover:bg-amber-800"
+                        : "border-amber-700 text-amber-700 hover:bg-amber-50"
+                    }
+                    onClick={() =>
+                      handleAvaliacaoChange(
+                        "medalha",
+                        avaliacao.medalha === "bronze" ? null : "bronze"
+                      )
+                    }
+                  >
+                    <Award className="mr-2 h-4 w-4" />
+                    Bronze
+                  </Button>
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="comentario">Comentários e Feedback</Label>
-              <Textarea
-                id="comentario"
-                placeholder="Compartilhe sua avaliação detalhada sobre este projeto..."
-                rows={5}
-                value={avaliacao.comentario}
-                onChange={(e) =>
-                  handleAvaliacaoChange("comentario", e.target.value)
-                }
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="comentario">Comentário</Label>
+                <Textarea
+                  id="comentario"
+                  placeholder="Compartilhe sua avaliação sobre este projeto..."
+                  rows={5}
+                  value={avaliacao.comentario}
+                  onChange={(e) =>
+                    handleAvaliacaoChange("comentario", e.target.value)
+                  }
+                />
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="encaminhar"
-                checked={avaliacao.encaminhadoParaGestor}
-                onCheckedChange={(checked) =>
-                  handleAvaliacaoChange("encaminhadoParaGestor", checked)
-                }
-              />
-              <Label htmlFor="encaminhar" className="cursor-pointer">
-                Encaminhar para avaliação do gestor
-              </Label>
+              <div className="space-y-2">
+                <Label htmlFor="destacar">Destacar Projeto</Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="destacar"
+                    checked={avaliacao.encaminhadoParaGestor}
+                    onCheckedChange={(checked) =>
+                      handleAvaliacaoChange("encaminhadoParaGestor", !!checked)
+                    }
+                  />
+                  <Label
+                    htmlFor="destacar"
+                    className="text-sm font-normal leading-none"
+                  >
+                    Destacar este projeto para gestores
+                  </Label>
+                </div>
+                {avaliacao.encaminhadoParaGestor && (
+                  <p className="text-xs text-muted-foreground">
+                    Projetos destacados aparecem no topo da lista para gestores.
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          </ScrollArea>
           <DialogFooter>
             <Button
               variant="outline"
@@ -570,20 +601,9 @@ const HRPendingProjects = () => {
             </Button>
             <Button
               onClick={handleSubmitAvaliacao}
-              disabled={isSubmittingEvaluation || !avaliacao.comentario}
-              className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+              disabled={isSubmittingEvaluation}
             >
-              {isSubmittingEvaluation ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Concluir Avaliação
-                </>
-              )}
+              {isSubmittingEvaluation ? "Enviando..." : "Enviar Avaliação"}
             </Button>
           </DialogFooter>
         </DialogContent>

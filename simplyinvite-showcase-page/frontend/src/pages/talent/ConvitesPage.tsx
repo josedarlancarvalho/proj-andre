@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Importar o serviço de entrevistas
 import {
@@ -79,8 +80,8 @@ const ConvitesPage = () => {
   });
 
   // Função para buscar entrevistas
-    const fetchEntrevistas = async () => {
-      try {
+  const fetchEntrevistas = async () => {
+    try {
       if (!user?.id) {
         console.log("Usuário não identificado, impossível buscar entrevistas");
         setError("Usuário não identificado");
@@ -89,7 +90,7 @@ const ConvitesPage = () => {
       }
 
       console.log(`Buscando entrevistas para o usuário ID: ${user.id}`);
-        setLoading(true);
+      setLoading(true);
       setError(null);
 
       // Buscar entrevistas do serviço
@@ -121,7 +122,7 @@ const ConvitesPage = () => {
           setEntrevistas([]);
         }
       }
-      } catch (error) {
+    } catch (error) {
       console.error("Erro ao atualizar entrevistas:", error);
       setError(
         "Não foi possível carregar as entrevistas. Tente novamente mais tarde."
@@ -141,10 +142,10 @@ const ConvitesPage = () => {
       } catch (e) {
         console.error("Erro ao recuperar entrevistas do localStorage:", e);
       }
-      } finally {
-        setLoading(false);
-      }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Evento para atualizar entrevistas quando uma nova é agendada
   useEffect(() => {
@@ -184,7 +185,7 @@ const ConvitesPage = () => {
     console.log("useEffect para carregar entrevistas iniciais executado");
     if (user?.id) {
       console.log(`Usuário identificado: ${user.id}, buscando entrevistas...`);
-    fetchEntrevistas();
+      fetchEntrevistas();
     } else {
       console.log("Usuário não identificado ainda, aguardando...");
     }
@@ -198,32 +199,18 @@ const ConvitesPage = () => {
     });
   };
 
-  const handleConfirmAction = async () => {
-    try {
-      if (confirmDialog.action === "aceitar") {
-        await handleAccept(confirmDialog.id);
-      } else {
-        await handleDecline(confirmDialog.id);
-      }
-      setConfirmDialog({ ...confirmDialog, open: false });
-    } catch (error) {
-      console.error("Erro ao processar ação:", error);
-      toast.error("Ocorreu um erro ao processar sua solicitação");
-    }
-  };
-
   const handleAccept = async (id: string) => {
     try {
       // Aqui você pode implementar a lógica para aceitar a entrevista
       // Por enquanto apenas atualizamos o estado local
       toast.success("Entrevista aceita com sucesso!");
-      
+
       // Atualizar a lista de entrevistas
       setEntrevistas(
         entrevistas.map((entrevista) =>
-        entrevista.id === id 
+          entrevista.id === id
             ? { ...entrevista, status: "agendada" }
-          : entrevista
+            : entrevista
         )
       );
     } catch (error) {
@@ -236,13 +223,13 @@ const ConvitesPage = () => {
     try {
       await cancelarEntrevista(id);
       toast.success("Entrevista recusada com sucesso!");
-      
+
       // Atualizar a lista de entrevistas
       setEntrevistas(
         entrevistas.map((entrevista) =>
-        entrevista.id === id 
+          entrevista.id === id
             ? { ...entrevista, status: "cancelada" }
-          : entrevista
+            : entrevista
         )
       );
     } catch (error) {
@@ -302,8 +289,8 @@ const ConvitesPage = () => {
             ) : entrevistas.length > 0 ? (
               <div className="space-y-4">
                 {entrevistas.map((entrevista) => (
-                  <div 
-                    key={entrevista.id} 
+                  <div
+                    key={entrevista.id}
                     className={`border rounded-lg p-4 shadow-sm ${
                       entrevista.status === "cancelada" ? "opacity-70" : ""
                     }`}
@@ -318,12 +305,12 @@ const ConvitesPage = () => {
                           Entrevista com {entrevista.gestorNome || "Gestor"}
                         </p>
                       </div>
-                      <Badge 
+                      <Badge
                         className={
                           entrevista.status === "agendada"
-                            ? "bg-green-100 text-green-800" 
+                            ? "bg-green-100 text-green-800"
                             : entrevista.status === "cancelada"
-                              ? "bg-red-100 text-red-800" 
+                            ? "bg-red-100 text-red-800"
                             : "bg-blue-100 text-blue-800"
                         }
                       >
@@ -444,24 +431,31 @@ const ConvitesPage = () => {
         </Card>
       </div>
 
-      {/* Diálogo de confirmação */}
+      {/* Dialog para confirmação */}
       <Dialog
         open={confirmDialog.open}
         onOpenChange={(open) => setConfirmDialog({ ...confirmDialog, open })}
       >
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>
               {confirmDialog.action === "aceitar"
-                ? "Confirmar presença"
-                : "Recusar entrevista"}
+                ? "Aceitar Entrevista"
+                : "Recusar Entrevista"}
             </DialogTitle>
             <DialogDescription>
               {confirmDialog.action === "aceitar"
-                ? "Você está confirmando sua presença nesta entrevista."
-                : "Você está recusando esta entrevista. Esta ação não pode ser desfeita."}
+                ? "Você está prestes a aceitar esta entrevista. Deseja continuar?"
+                : "Você está prestes a recusar esta entrevista. Deseja continuar?"}
             </DialogDescription>
           </DialogHeader>
+          <ScrollArea className="max-h-[50vh] pr-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              {confirmDialog.action === "aceitar"
+                ? "Ao aceitar, você confirma sua disponibilidade para a data e horário marcados."
+                : "Ao recusar, a entrevista será cancelada e o gestor será notificado."}
+            </p>
+          </ScrollArea>
           <DialogFooter>
             <Button
               variant="outline"
@@ -475,9 +469,15 @@ const ConvitesPage = () => {
               variant={
                 confirmDialog.action === "aceitar" ? "default" : "destructive"
               }
-              onClick={handleConfirmAction}
+              onClick={() => {
+                if (confirmDialog.action === "aceitar") {
+                  handleAccept(confirmDialog.id);
+                } else {
+                  handleDecline(confirmDialog.id);
+                }
+              }}
             >
-              {confirmDialog.action === "aceitar" ? "Confirmar" : "Recusar"}
+              {confirmDialog.action === "aceitar" ? "Aceitar" : "Recusar"}
             </Button>
           </DialogFooter>
         </DialogContent>

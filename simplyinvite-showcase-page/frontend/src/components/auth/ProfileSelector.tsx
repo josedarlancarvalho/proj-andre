@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -11,6 +11,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { User, Briefcase, Users } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ProfileSelectorProps {
   isOpen: boolean;
@@ -19,17 +21,17 @@ interface ProfileSelectorProps {
 
 const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
   const navigate = useNavigate();
-  
+
   const handleProfileSelect = (profileType: string) => {
     switch (profileType) {
-      case 'jovem':
-        navigate('/jovem-auth');
+      case "jovem":
+        navigate("/jovem-auth");
         break;
-      case 'rh':
-        navigate('/rh-auth');
+      case "rh":
+        navigate("/rh-auth");
         break;
-      case 'gestor':
-        navigate('/gestor-auth');
+      case "gestor":
+        navigate("/gestor-auth");
         break;
       default:
         break;
@@ -39,48 +41,60 @@ const ProfileSelector = ({ isOpen, onOpenChange }: ProfileSelectorProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">Escolha seu perfil</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-bold">
+            Escolha seu perfil
+          </DialogTitle>
           <DialogDescription className="text-center">
-            Selecione como você quer acessar o SimplyInvite
+            Selecione o tipo de perfil que deseja acessar
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-          <Card className="cursor-pointer hover:border-si-accent transition-all" 
-                onClick={() => handleProfileSelect('jovem')}>
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <User className="h-12 w-12 text-si-accent mb-4" />
-              <h3 className="text-lg font-medium">Sou Jovem</h3>
-              <p className="text-sm text-muted-foreground text-center mt-2">
-                Quero mostrar meus talentos
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+            <Link
+              to="/jovem/login"
+              className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              onClick={() => onOpenChange(false)}
+            >
+              <div className="w-16 h-16 bg-si-accent rounded-full flex items-center justify-center">
+                <User className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-medium">Jovem Talento</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Para candidatos buscando oportunidades
               </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="cursor-pointer hover:border-si-accent transition-all"
-                onClick={() => handleProfileSelect('rh')}>
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <Users className="h-12 w-12 text-si-accent mb-4" />
-              <h3 className="text-lg font-medium">Sou RH</h3>
-              <p className="text-sm text-muted-foreground text-center mt-2">
-                Quero avaliar talentos
+            </Link>
+
+            <Link
+              to="/rh/login"
+              className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              onClick={() => onOpenChange(false)}
+            >
+              <div className="w-16 h-16 bg-si-blue rounded-full flex items-center justify-center">
+                <Users className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-medium">Recursos Humanos</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Para profissionais de RH
               </p>
-            </CardContent>
-          </Card>
-          
-          <Card className="cursor-pointer hover:border-si-accent transition-all"
-                onClick={() => handleProfileSelect('gestor')}>
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <Briefcase className="h-12 w-12 text-si-accent mb-4" />
-              <h3 className="text-lg font-medium">Sou Chefe</h3>
-              <p className="text-sm text-muted-foreground text-center mt-2">
-                Quero contratar talentos
+            </Link>
+
+            <Link
+              to="/gestor/login"
+              className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              onClick={() => onOpenChange(false)}
+            >
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center">
+                <Briefcase className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="font-medium">Gestor</h3>
+              <p className="text-sm text-muted-foreground text-center">
+                Para gestores e recrutadores
               </p>
-            </CardContent>
-          </Card>
-        </div>
+            </Link>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

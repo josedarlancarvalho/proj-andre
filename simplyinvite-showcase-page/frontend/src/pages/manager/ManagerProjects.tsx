@@ -45,6 +45,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import FeedbackDisplay from "@/components/panels/FeedbackDisplay";
+import FeedbackPopup from "@/components/panels/FeedbackPopup";
+import Overlay from "@/components/ui/overlay";
 
 // Interface para projetos avaliados
 interface ProjetoAvaliado {
@@ -116,6 +120,25 @@ const ManagerProjects = () => {
     descricao: string;
   }>({ tipo: "", descricao: "" });
   const [incluirOportunidade, setIncluirOportunidade] = useState(false);
+
+  // Novo estado para o popup de feedback
+  const [feedbackPopup, setFeedbackPopup] = useState<{
+    isOpen: boolean;
+    author: string;
+    authorRole?: string;
+    content: string;
+    date?: string;
+    rating?: number;
+    oportunidade?: {
+      tipo: string;
+      descricao: string;
+    };
+  }>({
+    isOpen: false,
+    author: "",
+    content: "",
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -329,6 +352,24 @@ const ManagerProjects = () => {
     toast.info("Funcionalidade de contato em desenvolvimento");
   };
 
+  // Função para fechar o popup de feedback
+  const closeFeedbackPopup = () => {
+    setFeedbackPopup((prev) => ({ ...prev, isOpen: false }));
+  };
+
+  // Função para abrir o popup de feedback
+  const openFeedbackPopup = (feedback) => {
+    setFeedbackPopup({
+      isOpen: true,
+      author: feedback.gestor?.nomeCompleto || "Gestor",
+      authorRole: feedback.gestor?.cargo || "",
+      content: feedback.comentario,
+      date: feedback.createdAt,
+      rating: feedback.nota,
+      oportunidade: feedback.oportunidade,
+    });
+  };
+
   return (
     <UserPanelLayout userType="gestor">
       <div className="space-y-6">
@@ -440,162 +481,150 @@ const ManagerProjects = () => {
 
       {/* Diálogo para visualizar detalhes do projeto */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>{selectedProject?.title}</DialogTitle>
             <DialogDescription>
-              por {selectedProject?.autor} - {selectedProject?.date}
+              Detalhes do projeto e avaliações
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Descrição</h4>
-              <p className="text-sm text-muted-foreground">
-                {selectedProject?.descricao || "Sem descrição disponível"}
-              </p>
-            </div>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">Descrição</h4>
+                <p className="text-sm text-muted-foreground">
+                  {selectedProject?.descricao || "Sem descrição disponível"}
+                </p>
+              </div>
 
-            <div className="space-y-2">
-              <h4 className="font-medium">Tecnologias</h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedProject?.tecnologias &&
-                selectedProject.tecnologias.length > 0 ? (
-                  selectedProject.tecnologias.map((tech, index) => (
-                    <Badge key={index} variant="secondary">
-                      {tech}
-                    </Badge>
-                  ))
+              <div className="space-y-2">
+                <h4 className="font-medium">Tecnologias</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject?.tecnologias &&
+                  selectedProject.tecnologias.length > 0 ? (
+                    selectedProject.tecnologias.map((tech, index) => (
+                      <Badge key={index} variant="secondary">
+                        {tech}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Nenhuma tecnologia especificada
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {selectedProject?.linkRepositorio && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Link do Repositório</h4>
+                  <a
+                    href={selectedProject.linkRepositorio}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline flex items-center"
+                  >
+                    {selectedProject.linkRepositorio}
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {selectedProject?.linkDeploy && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Link de Demonstração</h4>
+                  <a
+                    href={selectedProject.linkDeploy}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline flex items-center"
+                  >
+                    {selectedProject.linkDeploy}
+                    <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {/* Avaliações do RH */}
+              <div className="space-y-2 mt-4">
+                <h4 className="font-medium">Avaliações do RH</h4>
+                {selectedProject?.avaliacoes &&
+                selectedProject.avaliacoes.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedProject.avaliacoes.map((avaliacao) => (
+                      <Card key={avaliacao.id} className="p-3">
+                        <div>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium text-sm">
+                                {avaliacao.avaliador?.nomeCompleto ||
+                                  "Avaliador RH"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {avaliacao.medalha && (
+                                <Badge
+                                  className={
+                                    avaliacao.medalha === "ouro"
+                                      ? "bg-yellow-400 text-yellow-950"
+                                      : avaliacao.medalha === "prata"
+                                      ? "bg-gray-300 text-gray-950"
+                                      : "bg-amber-700 text-white"
+                                  }
+                                >
+                                  <Award className="h-3 w-3 mr-1" />
+                                  Medalha{" "}
+                                  {avaliacao.medalha.charAt(0).toUpperCase() +
+                                    avaliacao.medalha.slice(1)}
+                                </Badge>
+                              )}
+                              <Badge variant="outline">
+                                Nota: {avaliacao.nota}/10
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-sm mt-2">{avaliacao.comentario}</p>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 ) : (
                   <span className="text-sm text-muted-foreground">
-                    Nenhuma tecnologia especificada
+                    Nenhuma avaliação disponível
+                  </span>
+                )}
+              </div>
+
+              {/* Feedbacks dos Gestores */}
+              <div className="space-y-2 mt-4">
+                <h4 className="font-medium">Feedbacks dos Gestores</h4>
+                {selectedProject?.feedbacks &&
+                selectedProject.feedbacks.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedProject.feedbacks.map((feedback) => (
+                      <div
+                        key={feedback.id}
+                        onClick={() => openFeedbackPopup(feedback)}
+                      >
+                        <FeedbackDisplay
+                          author={feedback.gestor?.nomeCompleto || "Gestor"}
+                          content={feedback.comentario}
+                          date={feedback.createdAt}
+                          company={feedback.gestor?.empresa}
+                          oportunidade={feedback.oportunidade}
+                          clickable={true}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Nenhum feedback dos gestores ainda
                   </span>
                 )}
               </div>
             </div>
-
-            {selectedProject?.linkRepositorio && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Link do Repositório</h4>
-                <a
-                  href={selectedProject.linkRepositorio}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline flex items-center"
-                >
-                  {selectedProject.linkRepositorio}
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            )}
-
-            {selectedProject?.linkDeploy && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Link de Demonstração</h4>
-                <a
-                  href={selectedProject.linkDeploy}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline flex items-center"
-                >
-                  {selectedProject.linkDeploy}
-                  <ExternalLink className="ml-1 h-3 w-3" />
-                </a>
-              </div>
-            )}
-
-            {/* Avaliações do RH */}
-            <div className="space-y-2 mt-4">
-              <h4 className="font-medium">Avaliações do RH</h4>
-              {selectedProject?.avaliacoes &&
-              selectedProject.avaliacoes.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedProject.avaliacoes.map((avaliacao) => (
-                    <Card key={avaliacao.id} className="p-3">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-sm">
-                              {avaliacao.avaliador?.nomeCompleto ||
-                                "Avaliador RH"}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {avaliacao.medalha && (
-                              <Badge
-                                className={
-                                  avaliacao.medalha === "ouro"
-                                    ? "bg-yellow-400 text-yellow-950"
-                                    : avaliacao.medalha === "prata"
-                                    ? "bg-gray-300 text-gray-950"
-                                    : "bg-amber-700 text-white"
-                                }
-                              >
-                                <Award className="h-3 w-3 mr-1" />
-                                Medalha{" "}
-                                {avaliacao.medalha.charAt(0).toUpperCase() +
-                                  avaliacao.medalha.slice(1)}
-                              </Badge>
-                            )}
-                            <Badge variant="outline">
-                              Nota: {avaliacao.nota}/10
-                            </Badge>
-                          </div>
-                        </div>
-                        <p className="text-sm mt-2">{avaliacao.comentario}</p>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  Nenhuma avaliação disponível
-                </span>
-              )}
-            </div>
-
-            {/* Feedbacks dos Gestores */}
-            <div className="space-y-2 mt-4">
-              <h4 className="font-medium">Feedbacks dos Gestores</h4>
-              {selectedProject?.feedbacks &&
-              selectedProject.feedbacks.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedProject.feedbacks.map((feedback) => (
-                    <Card key={feedback.id} className="p-3">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-sm">
-                              {feedback.gestor?.nomeCompleto || "Gestor"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(
-                                feedback.createdAt
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-sm mt-2">{feedback.comentario}</p>
-                        {feedback.oportunidade && (
-                          <div className="mt-2 p-2 bg-primary/10 rounded-md">
-                            <p className="text-xs font-medium">
-                              Oportunidade: {feedback.oportunidade.tipo}
-                            </p>
-                            <p className="text-xs">
-                              {feedback.oportunidade.descricao}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  Nenhum feedback dos gestores ainda
-                </span>
-              )}
-            </div>
-          </div>
+          </ScrollArea>
           <div className="flex justify-between mt-4 pt-2 border-t">
             <div className="flex gap-2">
               <TooltipProvider>
@@ -694,85 +723,87 @@ const ManagerProjects = () => {
         open={isFeedbackDialogOpen}
         onOpenChange={setIsFeedbackDialogOpen}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Adicionar Feedback</DialogTitle>
             <DialogDescription>
               Dê seu feedback para o projeto "{selectedProject?.title}"
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="feedback">Seu Feedback</Label>
-              <Textarea
-                id="feedback"
-                placeholder="Compartilhe suas impressões sobre este projeto..."
-                rows={5}
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="incluir-oportunidade"
-                checked={incluirOportunidade}
-                onCheckedChange={(checked) => {
-                  setIncluirOportunidade(checked === true);
-                }}
-              />
-              <label
-                htmlFor="incluir-oportunidade"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Incluir oportunidade para este candidato
-              </label>
-            </div>
-
-            {incluirOportunidade && (
-              <div className="space-y-4 border rounded-md p-4 bg-muted/20">
-                <div className="space-y-2">
-                  <Label htmlFor="tipo-oportunidade">
-                    Tipo de Oportunidade
-                  </Label>
-                  <Select
-                    value={oportunidade.tipo}
-                    onValueChange={(value: any) =>
-                      setOportunidade({ ...oportunidade, tipo: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de oportunidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="estagio">Estágio</SelectItem>
-                      <SelectItem value="trainee">Trainee</SelectItem>
-                      <SelectItem value="junior">Júnior</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="descricao-oportunidade">
-                    Descrição da Oportunidade
-                  </Label>
-                  <Textarea
-                    id="descricao-oportunidade"
-                    placeholder="Descreva a oportunidade..."
-                    rows={3}
-                    value={oportunidade.descricao}
-                    onChange={(e) =>
-                      setOportunidade({
-                        ...oportunidade,
-                        descricao: e.target.value,
-                      })
-                    }
-                  />
-                </div>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="feedback">Seu Feedback</Label>
+                <Textarea
+                  id="feedback"
+                  placeholder="Compartilhe suas impressões sobre este projeto..."
+                  rows={5}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                />
               </div>
-            )}
-          </div>
-          <div className="flex justify-between mt-4 pt-2 border-t">
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="incluir-oportunidade"
+                  checked={incluirOportunidade}
+                  onCheckedChange={(checked) => {
+                    setIncluirOportunidade(checked === true);
+                  }}
+                />
+                <label
+                  htmlFor="incluir-oportunidade"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Incluir oportunidade para este candidato
+                </label>
+              </div>
+
+              {incluirOportunidade && (
+                <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                  <div className="space-y-2">
+                    <Label htmlFor="tipo-oportunidade">
+                      Tipo de Oportunidade
+                    </Label>
+                    <Select
+                      value={oportunidade.tipo}
+                      onValueChange={(value: any) =>
+                        setOportunidade({ ...oportunidade, tipo: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de oportunidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="estagio">Estágio</SelectItem>
+                        <SelectItem value="trainee">Trainee</SelectItem>
+                        <SelectItem value="junior">Júnior</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="descricao-oportunidade">
+                      Descrição da Oportunidade
+                    </Label>
+                    <Textarea
+                      id="descricao-oportunidade"
+                      placeholder="Descreva a oportunidade..."
+                      rows={3}
+                      value={oportunidade.descricao}
+                      onChange={(e) =>
+                        setOportunidade({
+                          ...oportunidade,
+                          descricao: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <DialogFooter className="mt-4 pt-2 border-t">
             <Button
               variant="outline"
               onClick={() => setIsFeedbackDialogOpen(false)}
@@ -785,9 +816,25 @@ const ManagerProjects = () => {
             >
               {isSubmittingFeedback ? "Enviando..." : "Enviar Feedback"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Popup de Feedback */}
+      {feedbackPopup.isOpen && (
+        <>
+          <Overlay onClick={closeFeedbackPopup} />
+          <FeedbackPopup
+            author={feedbackPopup.author}
+            authorRole={feedbackPopup.authorRole}
+            content={feedbackPopup.content}
+            date={feedbackPopup.date}
+            rating={feedbackPopup.rating}
+            oportunidade={feedbackPopup.oportunidade}
+            onClose={closeFeedbackPopup}
+          />
+        </>
+      )}
     </UserPanelLayout>
   );
 };

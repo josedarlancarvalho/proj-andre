@@ -1,5 +1,9 @@
 # SimplyInvite - Plataforma de Conexão entre Talentos e Empresas
 
+## 📋 Visão Geral do Projeto
+
+SimplyInvite é uma plataforma inovadora que conecta jovens talentos, gestores e profissionais de RH, facilitando o processo de recrutamento através de vídeos de apresentação, projetos e entrevistas. A plataforma oferece uma experiência completa para todos os perfis de usuários, com funcionalidades específicas para cada um.
+
 ## 🚀 Início Rápido
 
 ### Pré-requisitos
@@ -24,7 +28,7 @@ Após a execução, acesse:
 - Frontend: http://localhost
 - PostgreSQL: localhost:5432
   - Usuário: postgres
-  - Senha: jonas1385
+  - Senha: podtgres
   - Banco: simplyinvite
 
 ### Desenvolvimento Local
@@ -56,10 +60,15 @@ Para testar a aplicação, use:
   - Vite
   - Tailwind CSS
   - shadcn-ui
+  - Lucide Icons
+  - date-fns
 
 - **Backend**
+  - Node.js
+  - Express
   - PostgreSQL
   - Supabase (autenticação)
+  - Nodemailer (sistema de e-mails)
 
 ## 📁 Estrutura do Projeto
 
@@ -67,57 +76,74 @@ Para testar a aplicação, use:
 src/
 ├── components/     # Componentes React reutilizáveis
 ├── pages/         # Páginas da aplicação
-├── backend/       # Lógica do backend
-│   ├── auth/      # Serviços de autenticação
-│   ├── database/  # Configuração do banco de dados
-│   ├── services/  # Serviços específicos por perfil
-│   ├── types/     # Tipos e interfaces
-│   └── utils/     # Funções utilitárias
-├── contexts/      # Contextos React
-└── hooks/         # Hooks personalizados
+│   ├── talent/    # Páginas específicas para jovens talentos
+│   ├── manager/   # Páginas específicas para gestores
+│   └── hr/        # Páginas específicas para RH
+├── servicos/      # Serviços de API e lógica de negócios
+│   ├── api.ts     # Configuração base da API
+│   ├── entrevistas.ts # Serviço de gerenciamento de entrevistas
+│   ├── jovem.ts   # Serviços específicos para jovens
+│   ├── gestor.ts  # Serviços específicos para gestores
+│   └── rh.ts      # Serviços específicos para RH
+├── contexts/      # Contextos React (AuthContext, etc.)
+├── hooks/         # Hooks personalizados
+└── utils/         # Funções utilitárias
 ```
 
-## 🔧 Comandos Úteis
+## ✨ Funcionalidades Principais
 
-```bash
-# Ver logs dos containers
-docker-compose logs
+### Para Jovens Talentos
 
-# Subir todos os containers em segundo plano
-docker-compose up -d
+- Criação de perfil completo com informações acadêmicas e profissionais
+- Envio de vídeos de apresentação
+- Submissão de projetos para avaliação
+- Visualização de feedbacks de gestores e RH
+- Agendamento e gerenciamento de entrevistas
+- Recebimento de notificações por e-mail com possibilidade de resposta direta
 
-# Subir todos os containers e reconstruir as imagens
-docker-compose up --build
+### Para Gestores
 
-# Parar todos os containers
-docker-compose down
+- Avaliação de perfis e projetos de jovens talentos
+- Fornecimento de feedback detalhado
+- Agendamento de entrevistas
+- Sistema de medalhas para classificação de talentos
 
-# Parar containers e remover volumes
-docker-compose down -v
+### Para RH
 
-# Reiniciar um serviço específico
-docker-compose restart frontend
-docker-compose restart postgres
+- Gestão de processos seletivos
+- Avaliação preliminar de candidatos
+- Acompanhamento de feedback dos gestores
+- Organização de entrevistas
 
-# Ver os containers em execução
-docker ps
+## 🔄 Atualizações Recentes
 
-# Criar uma nova imagem de um Dockerfile
-docker build -t nome-da-imagem .
+### Sistema de Entrevistas
 
-# Rodar um container a partir de uma imagem
-docker run -d -p 80:80 nome-da-imagem
+- Correção de URLs da API para agendamento de entrevistas
+- Implementação de armazenamento local (localStorage) como fallback quando a API falha
+- Melhoria no tratamento de erros e logs para depuração
+- Adição de notificações em tempo real para novas entrevistas agendadas
 
-# Entrar no terminal de um container em execução
-docker exec -it nome-do-container /bin/bash
+### Página de Convites do Jovem
 
-# Parar um container específico
-docker stop nome-do-container
+- Melhorias na exibição de entrevistas agendadas
+- Implementação de recuperação de dados do localStorage quando a API não está disponível
+- Adição de logs detalhados para facilitar a depuração
+- Melhoria na interface do usuário para melhor experiência
 
-# Remover um container específico
-docker rm nome-do-container
+### Sistema de Feedback
 
-```
+- Implementação de visualização completa de feedbacks na página de submissões
+- Organização de feedbacks usando componente Accordion para melhor visualização
+- Separação clara entre feedbacks de gestores e de RH
+- Melhoria na apresentação visual das medalhas recebidas
+
+### Sistema de Comunicação
+
+- Implementação de sistema de e-mail para notificações importantes
+- Possibilidade de resposta direta por e-mail sem necessidade de acessar a plataforma
+- Tokens de segurança para validação de respostas
+- Templates responsivos para e-mails em formato HTML e texto
 
 ## 🚨 Solução de Problemas
 
@@ -134,8 +160,13 @@ docker rm nome-do-container
    - Altere a porta no docker-compose.yml se necessário
 
 3. **Erro de permissão**
+
    - Execute o Docker Desktop como administrador
    - Verifique as permissões das pastas do projeto
+
+4. **Problemas com entrevistas não aparecendo**
+   - Verifique o localStorage do navegador
+   - Limpe o cache e recarregue a página
 
 ## 📝 Notas de Produção
 
@@ -145,6 +176,7 @@ Para ambiente de produção:
 
    - `VITE_SUPABASE_URL`: URL do seu projeto Supabase
    - `VITE_SUPABASE_ANON_KEY`: Chave anônima do seu projeto Supabase
+   - `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`: Configurações do servidor SMTP
 
 2. Ajuste as configurações de segurança no `nginx.conf`
 
@@ -157,3 +189,7 @@ Para ambiente de produção:
 3. Commit suas mudanças (`git commit -m 'Adiciona nova feature'`)
 4. Push para a branch (`git push origin feature/nova-feature`)
 5. Abra um Pull Request
+
+## 📞 Suporte
+
+Para suporte, entre em contato através do e-mail: suporte@simplyinvite.com

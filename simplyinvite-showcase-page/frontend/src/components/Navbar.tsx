@@ -6,6 +6,7 @@ import ProfileSelector from "@/components/auth/ProfileSelector";
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileSelectorOpen, setIsProfileSelectorOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,11 +21,11 @@ const Navbar = () => {
     <>
       <nav
         className={`fixed w-full z-50 transition-all duration-300 ${
-          isScrolled ? "bg-white shadow-md py-2" : "bg-transparent py-4"
+          isScrolled ? "bg-white shadow-md py-2" : "bg-transparent py-3"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center">
               <Link
                 to="/"
@@ -67,7 +68,10 @@ const Navbar = () => {
               </Button>
             </div>
 
-            <button className="md:hidden text-si-blue">
+            <button
+              className="md:hidden text-si-blue"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6"
@@ -84,6 +88,51 @@ const Navbar = () => {
               </svg>
             </button>
           </div>
+
+          {/* Mobile menu */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden bg-white shadow-md mt-2 py-3 px-4 rounded-lg">
+              <div className="flex flex-col space-y-3">
+                <a
+                  href="#how-it-works"
+                  className="text-si-blue hover:text-si-accent transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Como Funciona
+                </a>
+                <a
+                  href="#testimonials"
+                  className="text-si-blue hover:text-si-accent transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Depoimentos
+                </a>
+                <a
+                  href="#benefits"
+                  className="text-si-blue hover:text-si-accent transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Benefícios
+                </a>
+                <a
+                  href="#institutions"
+                  className="text-si-blue hover:text-si-accent transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Instituições que Transformam
+                </a>
+                <Button
+                  className="bg-si-accent hover:bg-si-accent/90 w-full"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProfileSelectorOpen(true);
+                  }}
+                >
+                  Entrar
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 

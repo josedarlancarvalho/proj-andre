@@ -30,6 +30,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import FeedbackDisplay from "@/components/panels/FeedbackDisplay";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Define interfaces for the data structures
 interface SubmissionProject {
@@ -694,7 +696,7 @@ const TalentSubmissions = () => {
 
       {/* Modal de Feedbacks */}
       <Dialog open={isFeedbackModalOpen} onOpenChange={setIsFeedbackModalOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>
               Feedbacks para {selectedProjectForFeedback?.title || "Projeto"}
@@ -710,7 +712,7 @@ const TalentSubmissions = () => {
               <span className="ml-3">Carregando feedbacks...</span>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto pr-2 max-h-[60vh]">
               {/* Feedbacks de RH */}
               {feedbackData.avaliacoes && feedbackData.avaliacoes.length > 0 ? (
                 <div>
@@ -739,18 +741,22 @@ const TalentSubmissions = () => {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4">
-                          <div className="p-2 bg-muted/30 rounded-md">
-                            <p>{avaliacao.comentario}</p>
-                            <div className="text-xs text-muted-foreground mt-2">
-                              {avaliacao.createdAt && (
-                                <time dateTime={avaliacao.createdAt}>
-                                  {new Date(
-                                    avaliacao.createdAt
-                                  ).toLocaleDateString()}
-                                </time>
-                              )}
+                          <ScrollArea className="max-h-[200px] rounded-md">
+                            <div className="p-2 bg-muted/30 rounded-md">
+                              <p className="whitespace-pre-wrap">
+                                {avaliacao.comentario}
+                              </p>
+                              <div className="text-xs text-muted-foreground mt-2">
+                                {avaliacao.createdAt && (
+                                  <time dateTime={avaliacao.createdAt}>
+                                    {new Date(
+                                      avaliacao.createdAt
+                                    ).toLocaleDateString()}
+                                  </time>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          </ScrollArea>
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -790,30 +796,34 @@ const TalentSubmissions = () => {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-4">
-                          <div className="p-2 bg-muted/30 rounded-md">
-                            <p>{feedback.comentario}</p>
+                          <ScrollArea className="max-h-[200px] rounded-md">
+                            <div className="p-2 bg-muted/30 rounded-md">
+                              <p className="whitespace-pre-wrap">
+                                {feedback.comentario}
+                              </p>
 
-                            {feedback.oportunidade && (
-                              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                                <h4 className="font-medium text-sm">
-                                  Oportunidade: {feedback.oportunidade.tipo}
-                                </h4>
-                                <p className="text-sm mt-1">
-                                  {feedback.oportunidade.descricao}
-                                </p>
-                              </div>
-                            )}
-
-                            <div className="text-xs text-muted-foreground mt-2">
-                              {feedback.createdAt && (
-                                <time dateTime={feedback.createdAt}>
-                                  {new Date(
-                                    feedback.createdAt
-                                  ).toLocaleDateString()}
-                                </time>
+                              {feedback.oportunidade && (
+                                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                                  <h4 className="font-medium text-sm">
+                                    Oportunidade: {feedback.oportunidade.tipo}
+                                  </h4>
+                                  <p className="text-sm mt-1">
+                                    {feedback.oportunidade.descricao}
+                                  </p>
+                                </div>
                               )}
+
+                              <div className="text-xs text-muted-foreground mt-2">
+                                {feedback.createdAt && (
+                                  <time dateTime={feedback.createdAt}>
+                                    {new Date(
+                                      feedback.createdAt
+                                    ).toLocaleDateString()}
+                                  </time>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                          </ScrollArea>
                         </AccordionContent>
                       </AccordionItem>
                     ))}
@@ -840,7 +850,7 @@ const TalentSubmissions = () => {
       {/* Adicionar modal de feedback */}
       {feedbackModal && projetoFeedback && (
         <Dialog open={feedbackModal} onOpenChange={setFeedbackModal}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Feedback do Projeto</DialogTitle>
               {projetoFeedback.avaliador && (
@@ -852,31 +862,14 @@ const TalentSubmissions = () => {
               )}
             </DialogHeader>
             <div className="space-y-4">
-              {projetoFeedback.nota && (
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">Nota:</span>
-                  <Badge variant="secondary">{projetoFeedback.nota}/10</Badge>
-                </div>
-              )}
-
-              {projetoFeedback.medalha && (
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">Medalha:</span>
-                  <Badge variant="outline">{projetoFeedback.medalha}</Badge>
-                </div>
-              )}
-
-              <div>
-                <h4 className="font-medium mb-2">Comentário</h4>
-                <p className="text-sm text-muted-foreground">
-                  {projetoFeedback.comentario}
-                </p>
-              </div>
-
-              <div className="text-xs text-muted-foreground">
-                Recebido em:{" "}
-                {new Date(projetoFeedback.createdAt).toLocaleDateString()}
-              </div>
+              <FeedbackDisplay
+                author={projetoFeedback.avaliador?.nome || "Avaliador"}
+                authorRole={projetoFeedback.avaliador?.tipoUsuario || ""}
+                content={projetoFeedback.comentario}
+                date={projetoFeedback.createdAt}
+                medal={projetoFeedback.medalha}
+                rating={projetoFeedback.nota}
+              />
             </div>
             <DialogFooter>
               <Button onClick={() => setFeedbackModal(false)}>Fechar</Button>
@@ -891,7 +884,7 @@ const TalentSubmissions = () => {
           open={isFeedbackGestorModalOpen}
           onOpenChange={setIsFeedbackGestorModalOpen}
         >
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Feedback do Gestor</DialogTitle>
               {feedbackGestor.avaliador && (
@@ -903,38 +896,15 @@ const TalentSubmissions = () => {
               )}
             </DialogHeader>
             <div className="space-y-4">
-              {feedbackGestor.nota && (
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">Nota:</span>
-                  <Badge variant="secondary">{feedbackGestor.nota}/10</Badge>
-                </div>
-              )}
-
-              {feedbackGestor.oportunidade && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Oportunidade</h4>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline">
-                      {feedbackGestor.oportunidade.tipo}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">
-                      {feedbackGestor.oportunidade.descricao}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h4 className="font-medium mb-2">Comentário</h4>
-                <p className="text-sm text-muted-foreground">
-                  {feedbackGestor.comentario}
-                </p>
-              </div>
-
-              <div className="text-xs text-muted-foreground">
-                Recebido em:{" "}
-                {new Date(feedbackGestor.createdAt).toLocaleDateString()}
-              </div>
+              <FeedbackDisplay
+                author={feedbackGestor.avaliador?.nome || "Gestor"}
+                authorRole={feedbackGestor.avaliador?.cargo || ""}
+                company={feedbackGestor.avaliador?.empresa}
+                content={feedbackGestor.comentario}
+                date={feedbackGestor.createdAt}
+                rating={feedbackGestor.nota}
+                oportunidade={feedbackGestor.oportunidade}
+              />
             </div>
             <DialogFooter>
               <Button onClick={() => setIsFeedbackGestorModalOpen(false)}>
@@ -951,50 +921,24 @@ const TalentSubmissions = () => {
           open={isAvaliacoesRHModalOpen}
           onOpenChange={setIsAvaliacoesRHModalOpen}
         >
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Avaliações do RH</DialogTitle>
               <DialogDescription>
                 Comentários e notas da equipe de Recursos Humanos
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 overflow-y-auto pr-2 max-h-[50vh]">
               {avaliacoesRH.map((avaliacao) => (
-                <Card key={avaliacao.id} className="p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <div>
-                      <h4 className="font-medium">
-                        {avaliacao.avaliador.nome}
-                      </h4>
-                      <p className="text-xs text-muted-foreground">
-                        {avaliacao.avaliador.tipoUsuario}
-                      </p>
-                    </div>
-                    {avaliacao.nota && (
-                      <Badge variant="secondary">
-                        Nota: {avaliacao.nota}/10
-                      </Badge>
-                    )}
-                  </div>
-
-                  {avaliacao.medalha && (
-                    <div className="mb-2">
-                      <Badge variant="outline">
-                        {avaliacao.medalha.charAt(0).toUpperCase() +
-                          avaliacao.medalha.slice(1)}
-                      </Badge>
-                    </div>
-                  )}
-
-                  <p className="text-sm text-muted-foreground">
-                    {avaliacao.comentario}
-                  </p>
-
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Avaliado em:{" "}
-                    {new Date(avaliacao.createdAt).toLocaleDateString()}
-                  </div>
-                </Card>
+                <FeedbackDisplay
+                  key={avaliacao.id}
+                  author={avaliacao.avaliador.nome}
+                  authorRole={avaliacao.avaliador.tipoUsuario}
+                  content={avaliacao.comentario}
+                  date={avaliacao.createdAt}
+                  medal={avaliacao.medalha}
+                  rating={avaliacao.nota}
+                />
               ))}
             </div>
             <DialogFooter>
